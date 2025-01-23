@@ -1,8 +1,9 @@
 package javaapplication1;
 
-import java.util.Calendar;
-import static java.util.Calendar.DAY_OF_WEEK;
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.Year;
+import java.time.format.DateTimeFormatter;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -14,101 +15,115 @@ import javax.swing.table.DefaultTableModel;
  * @author ricky
  */
 public class FormController {
-
-    int dayFill = 1, currentYear = 2025;
+    private int currentYear = Year.now().getValue();
+    int dayFill = 1;
 
     int dayFillPlus() {
         return dayFill++;
     }
 
-    public void initializeCalendar(JTable JTB1) {
-        for (int row = 0; row < JTB1.getRowCount(); row++) {
-            for (int col = 0; col < JTB1.getColumnCount() && dayFill <= 31; col++) {
+    public void initializeCalendar(JTable JTB1, Month month) {
+        for (int row = 0; row < JTB1.getRowCount(); row++)
+            for (int col = 0; col < 7 && dayFill <= getNumberOfDays(month); col++)
                 ((DefaultTableModel) JTB1.getModel()).setValueAt(dayFillPlus(), row, col);
-            }
-        }
+    }
+    
+    private boolean isLeapYear(int year) {
+        return Year.of(year).isLeap();
     }
 
-    public int getNumberOfDays(String month) {
-        switch (month) {
-            case "January", "March", "May", "July", "August", "October", "December" -> {
-                return 31;
-            }
-            case "April", "June", "September", "November" -> {
-                return 30;
-            }
-            case "February" -> {
-                /*
-            // Handle leap years
-            int year = Calendar.getInstance().get(Calendar.YEAR);
-            return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28;
-                 */
-                return 28;
-            }
-            default ->
-                throw new IllegalArgumentException("Invalid month: " + month);
-        }
+    public int getNumberOfDays(Month month) {
+        return month.length(isLeapYear(currentYear)); 
     }
 
     // Helper method to get month index (0-based)
     private int getMonthIndex(String month) {
         switch (month) {
-            case "January": return 0;
-            case "February": return 1;
-            case "March": return 2;
-            case "April": return 3;
-            case "May": return 4;
-            case "June": return 5;
-            case "July": return 6;
-            case "August": return 7;
-            case "September": return 8;
-            case "October": return 9;
-            case "November": return 10;
-            case "December": return 11;
-            default: throw new IllegalArgumentException("Invalid month");
+            case "January" -> {
+                return 0;
+            }
+            case "February" -> {
+                return 1;
+            }
+            case "March" -> {
+                return 2;
+            }
+            case "April" -> {
+                return 3;
+            }
+            case "May" -> {
+                return 4;
+            }
+            case "June" -> {
+                return 5;
+            }
+            case "July" -> {
+                return 6;
+            }
+            case "August" -> {
+                return 7;
+            }
+            case "September" -> {
+                return 8;
+            }
+            case "October" -> {
+                return 9;
+            }
+            case "November" -> {
+                return 10;
+            }
+            case "December" -> {
+                return 11;
+            }
+            default -> throw new IllegalArgumentException("Invalid month");
         }
     }
-    
-    // Helper method to get the starting day of the week (Monday = 0)
-    private int getStartingDayOfWeek(String month, int year) {
-    Calendar calendar = Calendar.getInstance();
-    calendar.set(year, getMonthIndex(month), 1); // Set to the first day of the month
-    return calendar.get(DAY_OF_WEEK) - 2; // Adjust to 0-based index (Monday = 0)
-    }
 
-    // Helper method to get the first day of the month as a Date object
-    private Date getFirstDayOfMonth(String month, int year) {
-    return new Date(year - 1900, getMonthIndex(month), 1); 
-    }
+    public void updateCalendar(JTable JTB1, JComboBox JCB1, Month month) {
+        dayFill = 1;
 
-    public void updateCalendar(JTable JTB1, JComboBox JCB1) {
-    dayFill = 1;
+        // Clear the table
+        for (int row = 0; row < JTB1.getRowCount(); row++) {
+            for (int col = 0; col < 7; col++) {
+                ((DefaultTableModel) JTB1.getModel()).setValueAt(null, row, col);
+            }
+        }
 
-    // Clear the table
-    for (int row = 0; row < JTB1.getRowCount(); row++)
-        for (int col = 0; col < JTB1.getColumnCount(); col++)
-            ((DefaultTableModel) JTB1.getModel()).setValueAt(null, row, col);
+        Month selectedMonth = Month.of(JCB1.getSelectedIndex()+1); 
+        int daysInMonth = getNumberOfDays(selectedMonth);
 
-    String selectedMonth = JCB1.getSelectedItem().toString();
-    int daysInMonth = getNumberOfDays(selectedMonth);
-
-    // Calculate starting day of the week (assuming Monday is the first day)
-    int startingDayOfWeek = getStartingDayOfWeek(selectedMonth, currentYear); 
-
-    for (int row = 0; row < JTB1.getRowCount(); row++) {
-        for (int col = 0; col < JTB1.getColumnCount(); col++) {
-            if (col >= startingDayOfWeek && dayFill <= daysInMonth) {
-                // Calculate milliseconds since the Epoch for the current day
-                long timeInMillis = getFirstDayOfMonth(selectedMonth, currentYear).getTime() 
-                        + (dayFill - 1) * 24 * 60 * 60 * 1000L; 
-                ((DefaultTableModel) JTB1.getModel()).setValueAt(new Date(timeInMillis), row, col);
-                dayFill++;
+        // Calculate starting day of the week (Monday = 0)
+        LocalDate firstDayOfMonth = LocalDate.of(currentYear, selectedMonth, 1);
+        int startingDayOfWeek = firstDayOfMonth.getDayOfWeek().getValue() - 1;
+        
+        int day = 1;
+        int row = 0;
+        int col = startingDayOfWeek;
+        
+        while (day <= daysInMonth) {
+            if (col >= 0 && col < 7) {
+                ((DefaultTableModel) JTB1.getModel()).setValueAt(day, row, col); 
+                day++;
+            }
+            col++;
+            if (col >= 7) {
+                col = 0;
+                row++;
             }
         }
     }
-}
 
-    public void updateEventBox(JTextField JTF1, JTextArea JTA1) {
-
+    public void updateEventBox(JTextField JTF1, JTextArea JTA1, LocalDate date) {
+        System.out.println(date);
+    }
+    
+    public int getDayId(int day, String month, int year) {
+    try {
+        LocalDate date = LocalDate.of(year, getMonthIndex(month)+1, day);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy"); 
+        return Integer.parseInt(date.format(formatter));
+    } catch (NumberFormatException e) { 
+        return -1; 
+    }
     }
 }

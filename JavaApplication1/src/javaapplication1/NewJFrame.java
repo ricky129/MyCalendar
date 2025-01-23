@@ -2,6 +2,8 @@ package javaapplication1;
 
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.time.LocalDate;
+import java.time.Month;
 import javax.swing.JTable;
 
 /**
@@ -11,13 +13,13 @@ import javax.swing.JTable;
 public class NewJFrame extends javax.swing.JFrame {
     
     FormController FC1 = new FormController();
-    
+    int day_id;
     /**
      * Creates new form NewJFrame
      */
     public NewJFrame() {
         initComponents();
-        FC1.initializeCalendar(jTable1);
+        FC1.initializeCalendar(jTable1, Month.of(jComboBox2.getSelectedIndex()+1));
         addTableClickListener();
     }
     
@@ -31,8 +33,13 @@ public class NewJFrame extends javax.swing.JFrame {
                 if (row != -1 && column != -1) { // Check if a cell was actually clicked
                     Object value = target.getValueAt(row, column);
                     System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
-                    FC1.updateEventBox(EventName, EventInfo);
-                }
+                    int day = (Integer) value;
+                    Month selectedMonth = Month.of(jComboBox2.getSelectedIndex()+1);
+                    int year = Integer.parseInt(jComboBox1.getSelectedItem().toString()); 
+                    LocalDate selectedDate = LocalDate.of(year, selectedMonth, day);
+
+                    FC1.updateEventBox(EventName, EventInfo, selectedDate); 
+                }//FC1.getDayId(Integer.parseInt(value.toString()), jComboBox2.getSelectedItem().toString(), Integer.parseInt(jComboBox1.getSelectedItem().toString()))
             }
         });
     }
@@ -106,9 +113,12 @@ public class NewJFrame extends javax.swing.JFrame {
                 "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
             }
         ));
+        jTable1.setCellSelectionEnabled(true);
+        jTable1.setShowGrid(true);
         jScrollPane1.setViewportView(jTable1);
 
         jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" }));
+        jComboBox2.setToolTipText("");
         jComboBox2.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jComboBox2ActionPerformed(evt);
@@ -161,7 +171,7 @@ public class NewJFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
-        FC1.updateCalendar(jTable1, jComboBox2);
+        FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex()+1));
     }//GEN-LAST:event_jComboBox2ActionPerformed
 
     /**

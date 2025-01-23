@@ -1,6 +1,6 @@
 package javaapplication1;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -9,16 +9,17 @@ import java.util.List;
  */
 public class Event {
     String name, description;
-    List<String> partecipants;
-    Date date;
+    List<String> participants;
+    LocalDate date;
 
-    public Event(String name, String description, List<String> partecipants, Date date) {
+    public Event(String name, String description, List<String> participants, LocalDate date) {
         this.name = name;
         this.description = description;
-        this.partecipants = partecipants;
+        this.participants = participants;
         this.date = date;
     }
 
+    // Getters and Setters (same as before)
     public String getName() {
         return name;
     }
@@ -35,19 +36,19 @@ public class Event {
         this.description = description;
     }
 
-    public List<String> getPartecipants() {
-        return partecipants;
+    public List<String> getParticipants() {
+        return participants;
     }
 
-    public void setPartecipants(List<String> partecipants) {
-        this.partecipants = partecipants;
+    public void setParticipants(List<String> participants) {
+        this.participants = participants;
     }
 
-    public Date getDate() {
+    public LocalDate getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
+    public void setDate(LocalDate date) {
         this.date = date;
     }
     
