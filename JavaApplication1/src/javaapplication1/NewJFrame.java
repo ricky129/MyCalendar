@@ -13,6 +13,7 @@ import javax.swing.JTable;
 public class NewJFrame extends javax.swing.JFrame {
     
     FormController FC1 = new FormController();
+    LoadCSV LCSV1 = new LoadCSV();
     int day_id;
     /**
      * Creates new form NewJFrame
@@ -21,6 +22,8 @@ public class NewJFrame extends javax.swing.JFrame {
         initComponents();
         FC1.initializeCalendar(jTable1, Month.of(jComboBox2.getSelectedIndex()+1));
         addTableClickListener();
+        LCSV1.loadCSV();
+        LCSV1.printEvents();
     }
     
     private void addTableClickListener() {
@@ -30,16 +33,17 @@ public class NewJFrame extends javax.swing.JFrame {
                 JTable target = (JTable) e.getSource();
                 int row = target.getSelectedRow();
                 int column = target.getSelectedColumn();
+                
                 if (row != -1 && column != -1) { // Check if a cell was actually clicked
                     Object value = target.getValueAt(row, column);
                     System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
+                    LCSV1.printEvents();
                     int day = (Integer) value;
                     Month selectedMonth = Month.of(jComboBox2.getSelectedIndex()+1);
                     int year = Integer.parseInt(jComboBox1.getSelectedItem().toString()); 
                     LocalDate selectedDate = LocalDate.of(year, selectedMonth, day);
-
                     FC1.updateEventBox(EventName, EventInfo, selectedDate); 
-                }//FC1.getDayId(Integer.parseInt(value.toString()), jComboBox2.getSelectedItem().toString(), Integer.parseInt(jComboBox1.getSelectedItem().toString()))
+                }
             }
         });
     }

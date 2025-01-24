@@ -9,13 +9,11 @@ import java.util.List;
  */
 public class Event {
     String name, description;
-    List<String> participants;
     LocalDate date;
 
-    public Event(String name, String description, List<String> participants, LocalDate date) {
+    public Event(LocalDate date, String name, String description) {
         this.name = name;
         this.description = description;
-        this.participants = participants;
         this.date = date;
     }
 
@@ -35,15 +33,7 @@ public class Event {
     public void setDescription(String description) {
         this.description = description;
     }
-
-    public List<String> getParticipants() {
-        return participants;
-    }
-
-    public void setParticipants(List<String> participants) {
-        this.participants = participants;
-    }
-
+    
     public LocalDate getDate() {
         return date;
     }
@@ -52,4 +42,8 @@ public class Event {
         this.date = date;
     }
     
+    @Override
+    public String toString() {
+        return "Date: " + date + ", Name: " + name + ", Description: " + description;
+    }
 }
