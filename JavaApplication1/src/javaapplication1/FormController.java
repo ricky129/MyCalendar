@@ -4,8 +4,6 @@ import java.time.LocalDate;
 import java.time.Month;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
@@ -19,20 +17,20 @@ import javax.swing.table.DefaultTableModel;
 public class FormController {
 
     private int currentYear = Year.now().getValue();
-    int dayFill = 1;
 
-    LoadCSV LCSV1 = new LoadCSV();
+    /*
+    In this case the class does not use its instance but takes it 
+    from the constructor caller, NewJFrame.java in this case.
+    */
+    LoadCSV LCSV1;
 
-    int dayFillPlus() {
-        return dayFill++;
-    }
-
-    public void initializeCalendar(JTable JTB1, Month month) {
-        for (int row = 0; row < JTB1.getRowCount(); row++) {
-            for (int col = 0; col < 7 && dayFill <= getNumberOfDays(month); col++) {
-                ((DefaultTableModel) JTB1.getModel()).setValueAt(dayFillPlus(), row, col);
-            }
-        }
+    /**
+     * It asks for the LoadCSV.java class object as a parameter, so as to
+     * use the main instance of the program and not its
+     * @param LCSV 
+     */
+    public FormController(LoadCSV LCSV) {
+        this.LCSV1 = LCSV;
     }
 
     private boolean isLeapYear(int year) {
@@ -88,7 +86,6 @@ public class FormController {
     }
 
     public void updateCalendar(JTable JTB1, JComboBox JCB1, Month month) {
-        dayFill = 1;
 
         // Clear the table
         for (int row = 0; row < JTB1.getRowCount(); row++) {
@@ -131,16 +128,23 @@ public class FormController {
             if (event.getDate().equals(date))
                 return event;
         }
+        System.out.println("Eventi caricati: " + LCSV1.getEventi().toString());
         System.out.println("Non trovato");
         return null;
     }
 
     public void updateEventBox(JTextField JTF1, JTextArea JTA1, LocalDate date) {
-        /*
         Event E1 = getEvent(date);
-        JTF1.setText(E1.name);
-        JTA1.setText(E1.description);
-        System.out.println(date);*/
+        
+        if(E1 != null){
+            JTF1.setText(E1.name);
+            JTA1.setText(E1.description);
+        }
+        else{
+            JTF1.setText("");
+            JTA1.setText("No event found!");
+        }
+            
     }
 
     public int getDayId(int day, String month, int year) {

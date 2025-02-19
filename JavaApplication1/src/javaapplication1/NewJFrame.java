@@ -11,38 +11,41 @@ import javax.swing.JTable;
  * @author ricky
  */
 public class NewJFrame extends javax.swing.JFrame {
-    
-    FormController FC1 = new FormController();
+    /*
+    Ora la classe NewJFrame.java crea l'istanza di LoadCSV.java, la quale viene
+    passata a FormController.java tramite il suo costruttore.
+    */
     LoadCSV LCSV1 = new LoadCSV();
-    int day_id;
+    FormController FC1 = new FormController(LCSV1);
     /**
      * Creates new form NewJFrame
      */
     public NewJFrame() {
         initComponents();
-        FC1.initializeCalendar(jTable1, Month.of(jComboBox2.getSelectedIndex()+1));
-        addTableClickListener();
         LCSV1.loadCSV();
         LCSV1.printEvents();
+        FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex()+1));
+        addTableClickListener();
     }
     
     private void addTableClickListener() {
-        jTable1.addMouseListener(new MouseAdapter() {
+        jTable1.addMouseListener(new MouseAdapter() {   //extends MouseAdapter
             @Override
             public void mouseClicked(MouseEvent e) {
-                JTable target = (JTable) e.getSource();
+                JTable target = (JTable) e.getSource(); /*This gets the JTable object that was clicked.  
+                e.getSource() returns the component that triggered the event, which is the jTable1 in this case.
+                */
                 int row = target.getSelectedRow();
                 int column = target.getSelectedColumn();
                 
                 if (row != -1 && column != -1) { // Check if a cell was actually clicked
                     Object value = target.getValueAt(row, column);
                     System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
-                    LCSV1.printEvents();
                     int day = (Integer) value;
                     Month selectedMonth = Month.of(jComboBox2.getSelectedIndex()+1);
                     int year = Integer.parseInt(jComboBox1.getSelectedItem().toString()); 
                     LocalDate selectedDate = LocalDate.of(year, selectedMonth, day);
-                    FC1.updateEventBox(EventName, EventInfo, selectedDate); 
+                    FC1.updateEventBox(EventName, EventInfo, selectedDate);
                 }
             }
         });

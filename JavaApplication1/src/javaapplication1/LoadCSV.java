@@ -23,9 +23,9 @@ public void printEvents() {
             return;
         }
 
-        System.out.println("Loaded Events:");
+        //System.out.println("Loaded Events:");
         for (Event event : eventi) {
-            System.out.println(event); // Calls Event's toString() method
+            //System.out.println(event); // Calls Event's toString() method
             // Or for more detailed output:
             //System.out.println("Date: " + event.getDate() + ", Name: " + event.getName() + ", Description: " + event.getDescription());
         }
