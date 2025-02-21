@@ -1,14 +1,15 @@
-package javaapplication1;
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ */
+
+package com.mycompany.mycalendar;
 
 /**
  *
  * @author ricky
  */
-public class JavaApplication1 {
+public class MyCalendar {
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
@@ -40,5 +41,4 @@ public class JavaApplication1 {
             }
         });
     }
-    
 }

@@ -1,4 +1,4 @@
-package javaapplication1;
+package com.mycompany.mycalendar;
 
 import java.time.LocalDate;
 import java.time.Month;
@@ -25,7 +25,7 @@ public class FormController {
     LoadCSV LCSV1;
 
     /**
-     * It asks for the LoadCSV.java class object as a parameter, so as to
+     * It asks for the LoadCSV.java class object as a parameter, as to
      * use the main instance of the program and not its
      * @param LCSV 
      */
@@ -155,5 +155,10 @@ public class FormController {
         } catch (NumberFormatException e) {
             return -1;
         }
+    }
+    
+    public void AddEvent(LocalDate date, String title, String description){
+        Event E1 = new Event(date, title, description);
+        LCSV1.eventi.add(E1);
     }
 }

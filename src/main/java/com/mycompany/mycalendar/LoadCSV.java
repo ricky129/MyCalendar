@@ -1,4 +1,4 @@
-package javaapplication1;
+package com.mycompany.mycalendar;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

@@ -1,7 +1,6 @@
-package javaapplication1;
+package com.mycompany.mycalendar;
 
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  *
