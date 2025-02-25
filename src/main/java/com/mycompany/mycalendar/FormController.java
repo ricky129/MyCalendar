@@ -156,9 +156,4 @@ public class FormController {
             return -1;
         }
     }
-    
-    public void AddEvent(LocalDate date, String title, String description){
-        Event E1 = new Event(date, title, description);
-        LCSV1.eventi.add(E1);
-    }
 }
