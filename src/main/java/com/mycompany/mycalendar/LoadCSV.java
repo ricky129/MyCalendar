@@ -76,9 +76,8 @@ public void printEvents() {
         }
     }
     
-    public void addEventi(LocalDate date, String title, String description){
-        Event E1 = new Event(date, title, description);
+    public void addEventi(Event E1){
+        writeOnCSV(E1);
         eventi.add(E1);
-        
     }
 }

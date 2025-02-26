@@ -246,7 +246,7 @@ public class NewJFrame extends javax.swing.JFrame {
             LocalDate date = zonedDateTime.toLocalDate(); // Extract the date part from the ZonedDateTime to get a LocalDate, which represents a date without time information.
             System.out.println(date.toString());
             Event E1 = new Event(date, NewEventName.getText(), NewEventDescription.getText());
-            LCSV1.writeOnCSV(E1);
+            LCSV1.addEventi(E1);
             /*
             We start with a universal time (no time zone).
             We apply a time zone to interpret that universal time in a specific location.
