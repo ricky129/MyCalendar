@@ -1,6 +1,6 @@
 package com.mycompany.mycalendar;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
@@ -98,7 +98,7 @@ public class FormController {
         int daysInMonth = getNumberOfDays(selectedMonth);
 
         // Calculate starting day of the week (Monday = 0)
-        LocalDate firstDayOfMonth = LocalDate.of(currentYear, selectedMonth, 1);
+        LocalDateTime firstDayOfMonth = LocalDateTime.of(currentYear, selectedMonth, 1, 00, 00);
         int startingDayOfWeek = firstDayOfMonth.getDayOfWeek().getValue() - 1;
 
         int day = 1;
@@ -118,23 +118,32 @@ public class FormController {
         }
     }
 
-    private Event getEvent(LocalDate date) {
+    private Event getEvent(LocalDateTime date, JTextField JTF1, JTextArea JTA1) {
         if (LCSV1.getEventi() == null) {
             System.out.println("Event list is null");
             return null;
         }
 
-        for (Event event : LCSV1.getEventi()) {
-            if (event.getDate().equals(date))
-                return event;
+        for (int i = 0; i < LCSV1.eventi.size(); i++) {
+            
+            LocalDateTime dateLCSV = LCSV1.eventi.get(i).date;
+            
+            if(dateLCSV.getYear() == date.getYear() || dateLCSV.getMonth() == date.getMonth() 
+                    || dateLCSV.getMinute() == date.getMinute()){
+                JTF1.setText("More events");
+                JTA1.append(LCSV1.eventi.get(i).date + "\n" + LCSV1.eventi.get(i).name + "\n" + LCSV1.eventi.get(i).description);
+            }
+                
+            //if(LCSV1.eventi.get(i).date.toLocalDate())
         }
+
         System.out.println("Eventi caricati: " + LCSV1.getEventi().toString());
         System.out.println("Non trovato");
         return null;
     }
 
-    public void updateEventBox(JTextField JTF1, JTextArea JTA1, LocalDate date) {
-        Event E1 = getEvent(date);
+    public void updateEventBox(JTextField JTF1, JTextArea JTA1, LocalDateTime date) {
+        Event E1 = getEvent(date, JTF1, JTA1);
         
         if(E1 != null){
             JTF1.setText(E1.name);
@@ -149,7 +158,7 @@ public class FormController {
 
     public int getDayId(int day, String month, int year) {
         try {
-            LocalDate date = LocalDate.of(year, getMonthIndex(month) + 1, day);
+            LocalDateTime date = LocalDateTime.of(year, getMonthIndex(month) + 1, day, 0, 0);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy");
             return Integer.parseInt(date.format(formatter));
         } catch (NumberFormatException e) {

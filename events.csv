@@ -1,13 +1,13 @@
-Date,Name,Description
-2025-01-01,Project Meeting,Discuss project progress and next steps.
-2024-04-20,Team Building,Outdoor team activities and social gathering.
-2024-05-01,Product Launch,Official launch of the new product.
-2024-06-10,Conference,Industry conference on emerging technologies.
-2024-07-25,Training Session,Training on new software tools.
-2024-08-05,Holiday,Summer holiday break.
-2024-09-12,Workshop,Interactive workshop on data analysis.
-2024-10-31,Halloween Party,Office Halloween celebration.
-2024-11-22,Thanksgiving Celebration,Thanksgiving lunch at the office.
-2024-12-25,Christmas Party,Christmas party and gift exchange.
-2025-02-27,test,test
-2025-02-28,test2,test2
+DateTime,Name,Description
+2025-01-01T12:00:00,Project Meeting,Discuss project progress and next steps.
+2024-04-20T12:00:00,Team Building,Outdoor team activities and social gathering.
+2024-05-01T12:00:00,Product Launch,Official launch of the new product.
+2024-06-10T12:00:00,Conference,Industry conference on emerging technologies.
+2024-07-25T12:00:00,Training Session,Training on new software tools.
+2024-08-05T12:00:00,Holiday,Summer holiday break.
+2024-09-12T12:00:00,Workshop,Interactive workshop on data analysis.
+2024-10-31T12:00:00,Halloween Party,Office Halloween celebration.
+2024-11-22T12:00:00,Thanksgiving Celebration,Thanksgiving lunch at the office.
+2024-12-25T12:00:00,Christmas Party,Christmas party and gift exchange.
+2025-02-27T12:00:00,test,test
+2025-02-28T12:00:00,test2,test2

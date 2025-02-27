@@ -5,7 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +54,8 @@ public void printEvents() {
                 String[] EventData = line.split(",");
                 
                 // Parse the date string using a formatter
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-                LocalDate date = LocalDate.parse(EventData[0], formatter);
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
+                LocalDateTime date = LocalDateTime.parse(EventData[0], formatter);
             
                 eventi.add(new Event(date, EventData[1], EventData[2]));
             }
@@ -64,9 +64,9 @@ public void printEvents() {
         }
     }
     
-    public void writeOnCSV(Event E1){
+    private void writeOnCSV(Event E1){
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("events.csv", true))) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm");
             String dateString = E1.getDate().format(formatter);
             String newLine = dateString + "," + E1.getName() + "," + E1.getDescription();
             writer.newLine();

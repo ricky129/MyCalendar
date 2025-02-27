@@ -1,6 +1,6 @@
 package com.mycompany.mycalendar;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  *
@@ -8,9 +8,9 @@ import java.time.LocalDate;
  */
 public class Event {
     String name, description;
-    LocalDate date;
+    LocalDateTime date;
 
-    public Event(LocalDate date, String name, String description) {
+    public Event(LocalDateTime date, String name, String description) {
         this.name = name;
         this.description = description;
         this.date = date;
@@ -33,11 +33,11 @@ public class Event {
         this.description = description;
     }
     
-    public LocalDate getDate() {
+    public LocalDateTime getDate() {
         return date;
     }
 
-    public void setDate(LocalDate date) {
+    public void setDate(LocalDateTime date) {
         this.date = date;
     }
     
