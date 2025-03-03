@@ -16,7 +16,6 @@ public class Event {
         this.date = date;
     }
 
-    // Getters and Setters (same as before)
     public String getName() {
         return name;
     }

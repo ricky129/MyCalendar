@@ -74,13 +74,13 @@ public class FormController {
     public boolean getEvent(LocalDateTime date, JTextField EventName, JTextArea EventInfo) {
         boolean ret = false;
         String eventInfoTemp;
-        
+
         if (LCSV1.getEventi() == null) {
             System.out.println("Event list is null");
             return false;
         }
-        
-        if(LCSV1.getEventi().isEmpty()){
+
+        if (LCSV1.getEventi().isEmpty()) {
             System.out.println("Event list is empty");
             return false;
         }
@@ -88,25 +88,68 @@ public class FormController {
         for (Event evento : LCSV1.eventi) {
             LocalDateTime dateLCSV = evento.date;
 
-            if(dateLCSV.toLocalDate().equals(date.toLocalDate())){
-                
-                switch (EventName.getText()) {
+            if (dateLCSV.toLocalDate().equals(date.toLocalDate())) {
+
+                switch (EventName.getText()) {                          //StringBuilder al posto di "+" perché più efficiente
                     case "" -> {
-                        System.out.println("CASO 1");
                         EventName.setText(evento.name);
-                        EventInfo.setText(dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description + "\n");
+
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(dateLCSV.getMonth())
+                                .append(" ")
+                                .append(dateLCSV.getDayOfMonth())
+                                .append(" ")
+                                .append(dateLCSV.getHour())
+                                .append(":")
+                                .append(dateLCSV.getMinute())
+                                .append("\n")
+                                .append(evento.description)
+                                .append("\n");
+
+                        EventInfo.setText(sb.toString());
                         ret = true;
                     }
                     case "More events" -> {
-                        EventInfo.append("\n" + evento.name + "\n" + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description);
-                        System.out.println("CASO 3");
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("\n")
+                                .append(evento.name)
+                                .append("\n")
+                                .append(dateLCSV.getMonth())
+                                .append(" ")
+                                .append(dateLCSV.getDayOfMonth())
+                                .append(" ")
+                                .append(dateLCSV.getHour())
+                                .append(":")
+                                .append(dateLCSV.getMinute())
+                                .append("\n")
+                                .append(evento.description);
+
+                        EventInfo.append(sb.toString());
                         ret = true;
                     }
                     default -> {
                         eventInfoTemp = EventInfo.getText();
-                        EventInfo.setText(EventName.getText() + "\n" + eventInfoTemp + "\n" + evento.name + "\n" + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description + "\n");
+
+                        StringBuilder sb = new StringBuilder();
+                        sb.append(EventName.getText())
+                                .append("\n")
+                                .append(eventInfoTemp)
+                                .append("\n")
+                                .append(evento.name)
+                                .append("\n")
+                                .append(dateLCSV.getMonth())
+                                .append(" ")
+                                .append(dateLCSV.getDayOfMonth())
+                                .append(" ")
+                                .append(dateLCSV.getHour())
+                                .append(":")
+                                .append(dateLCSV.getMinute())
+                                .append("\n")
+                                .append(evento.description)
+                                .append("\n");
+
+                        EventInfo.setText(sb.toString());
                         EventName.setText("More events");
-                        System.out.println("CASO 2");
                         ret = true;
                     }
                 }

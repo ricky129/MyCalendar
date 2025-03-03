@@ -26,12 +26,8 @@ public void printEvents() {
             return;
         }
 
-        //System.out.println("Loaded Events:");
-        for (Event event : eventi) {
-            //System.out.println(event); // Calls Event's toString() method
-            // Or for more detailed output:
+        for (Event event : eventi)
             System.out.println("Date: " + event.getDate() + ", Name: " + event.getName() + ", Description: " + event.getDescription());
-        }
     }
 
     public void setEventi(List<Event> eventi) {
