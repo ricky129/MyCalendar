@@ -42,7 +42,7 @@ public class NewJFrame extends javax.swing.JFrame {
         NewEventDescription.setEnabled(false);
         NewEventName.setEnabled(false);
 
-        //LISTENERE AL TEXT FIELD
+        //LISTENER AL TEXT FIELD
         NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
 
             @Override
@@ -78,6 +78,10 @@ public class NewJFrame extends javax.swing.JFrame {
                 /*This gets the JTable object that was clicked.  
                 e.getSource() returns the component that triggered the event, which is the jTable1 in this case.
                  */
+                
+                EventName.setText("");
+                EventInfo.setText("");
+                
                 int row = target.getSelectedRow();
                 int column = target.getSelectedColumn();
 
@@ -88,7 +92,11 @@ public class NewJFrame extends javax.swing.JFrame {
                     Month selectedMonth = Month.of(jComboBox2.getSelectedIndex() + 1);
                     int year = Integer.parseInt(jComboBox1.getSelectedItem().toString());
                     LocalDateTime selectedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
-                    FC1.updateEventBox(EventName, EventInfo, selectedDate);
+                    System.out.println("Data clickata: " + selectedDate);
+                    if(!FC1.getEvent(selectedDate, EventName, EventInfo)){
+                        EventName.setText("");
+                        EventInfo.setText("No event found!");
+                    }
                 }
             }
         });
