@@ -1,5 +1,6 @@
 package com.mycompany.mycalendar;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
@@ -120,7 +121,7 @@ public class FormController {
 
     public boolean getEvent(LocalDateTime date, JTextField EventName, JTextArea EventInfo) {
         boolean ret = false;
-        String eventNameTemp = null, eventInfoTemp;
+        String eventInfoTemp;
         if (LCSV1.getEventi() == null) {
             System.out.println("Event list is null");
             return false;
@@ -138,30 +139,31 @@ public class FormController {
                     + dateLCSV.getYear() + " "
                     + dateLCSV.getMonth() + " "
                     + dateLCSV.getDayOfMonth());
-
+            
             if (dateLCSV.getYear() == date.getYear()
                     && dateLCSV.getMonth() == date.getMonth()
                     && dateLCSV.getDayOfMonth() == date.getDayOfMonth()) {
 
-                if (!EventInfo.getText().isEmpty() && !EventName.getText().equals("More events")) {
-                    EventInfo.append("\n" + EventName.getText() + "\n" + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description);
-                    
-                    
-                    /*if(!EventName.equals("More events"))
-                        eventNameTemp = EventName.getText();
-                    eventInfoTemp = EventInfo.getText();
-                    EventInfo.setText(eventNameTemp + "\n" + eventInfoTemp + "\n");
-                    //EventInfo.append("\n" + EventName.getText() + "\n");
-                    EventName.setText("More events");
-                    EventInfo.append("\n" + evento.name + "\n" + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description);*/
-                }
-                if(!EventName.getText().equals("More events"))
-                    EventInfo.append("\n" + evento.name + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description + "\n");
-                else {
+                if(EventName.getText().isEmpty()){
+                    System.out.println("CASO 1");
                     EventName.setText(evento.name);
-                    EventInfo.setText("\n" + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description + "\n");
+                    EventInfo.setText(dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description + "\n");
+                    ret = true;
+                    continue;
                 }
-                ret = true;
+                if(!EventInfo.getText().isEmpty() && !EventName.getText().equals("More events")){
+                    eventInfoTemp = EventInfo.getText();
+                    EventInfo.setText(EventName.getText() + "\n" + eventInfoTemp + "\n" + evento.name + "\n" + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n"+ evento.description + "\n");
+                    EventName.setText("More events");
+                    System.out.println("CASO 2");
+                    ret = true;
+                    continue;
+                }
+                if(EventName.getText().equals("More events")){
+                    EventInfo.append("\n" + evento.name + "\n" + dateLCSV.getMonth() + " " + dateLCSV.getDayOfMonth() + "\n" + evento.description);
+                    System.out.println("CASO 3");
+                    ret = true;
+                }
             }
         }
         return ret;
