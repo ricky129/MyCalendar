@@ -7,7 +7,7 @@ package com.mycompany.mycalendar;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.Instant;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -42,7 +42,7 @@ public class NewJFrame extends javax.swing.JFrame {
         NewEventDescription.setEnabled(false);
         NewEventName.setEnabled(false);
 
-        //LISTENERE AL TEXT FIELD
+        //LISTENER AL TEXT FIELD
         NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
 
             @Override
@@ -78,6 +78,10 @@ public class NewJFrame extends javax.swing.JFrame {
                 /*This gets the JTable object that was clicked.  
                 e.getSource() returns the component that triggered the event, which is the jTable1 in this case.
                  */
+                
+                EventName.setText("");
+                EventInfo.setText("");
+                
                 int row = target.getSelectedRow();
                 int column = target.getSelectedColumn();
 
@@ -87,8 +91,12 @@ public class NewJFrame extends javax.swing.JFrame {
                     int day = (Integer) value;
                     Month selectedMonth = Month.of(jComboBox2.getSelectedIndex() + 1);
                     int year = Integer.parseInt(jComboBox1.getSelectedItem().toString());
-                    LocalDate selectedDate = LocalDate.of(year, selectedMonth, day);
-                    FC1.updateEventBox(EventName, EventInfo, selectedDate);
+                    LocalDateTime selectedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
+                    System.out.println("Data clickata: " + selectedDate);
+                    if(!FC1.getEvent(selectedDate, EventName, EventInfo)){
+                        EventName.setText("");
+                        EventInfo.setText("No event found!");
+                    }
                 }
             }
         });
@@ -241,17 +249,17 @@ public class NewJFrame extends javax.swing.JFrame {
             NewEventName.setEnabled(true);
         }
         else if(NewEvent.getText().equals("Add Event")){            //DA PENSARE COME AGGIUNGERE L'ORARIO AGLI EVENTI
-            Instant instant = ((Date) NewDate.getValue()).toInstant(); // Convert the java.util.Date to an Instant, which is a point in time without time zone information.
-            ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault()); // Apply the system's default time zone to the Instant to get a ZonedDateTime, which includes date, time, and time zone information.
-            LocalDate date = zonedDateTime.toLocalDate(); // Extract the date part from the ZonedDateTime to get a LocalDate, which represents a date without time information.
-            System.out.println(date.toString());
-            Event E1 = new Event(date, NewEventName.getText(), NewEventDescription.getText());
-            LCSV1.addEventi(E1);
             /*
             We start with a universal time (no time zone).
             We apply a time zone to interpret that universal time in a specific location.
             Then we extract the date from that time zone specific representation.
             */
+            Instant instant = ((Date) NewDate.getValue()).toInstant(); // Convert the java.util.Date to an Instant, which is a point in time without time zone information.
+            ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault()); // Apply the system's default time zone to the Instant to get a ZonedDateTime, which includes date, time, and time zone information.
+            LocalDateTime date = zonedDateTime.toLocalDateTime(); // Extract the date part from the ZonedDateTime to get a LocalDate, which represents a date without time information.
+            System.out.println(date.toString());
+            Event E1 = new Event(date, NewEventName.getText(), NewEventDescription.getText());
+            LCSV1.addEventi(E1);
         }
     }//GEN-LAST:event_NewEventMouseClicked
 
