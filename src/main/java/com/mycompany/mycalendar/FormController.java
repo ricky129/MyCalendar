@@ -75,24 +75,24 @@ public class FormController {
         boolean ret = false;
         String eventInfoTemp;
 
-        if (LCSV1.getEventi() == null) {
+        if (LCSV1.getEvents() == null) {
             System.out.println("Event list is null");
             return false;
         }
 
-        if (LCSV1.getEventi().isEmpty()) {
+        if (LCSV1.getEvents().isEmpty()) {
             System.out.println("Event list is empty");
             return false;
         }
 
-        for (Event evento : LCSV1.eventi) {
-            LocalDateTime dateLCSV = evento.date;
+        for (Event evento : LCSV1.getEvents()) {
+            LocalDateTime dateLCSV = evento.getDate();
 
             if (dateLCSV.toLocalDate().equals(date.toLocalDate())) {
 
-                switch (EventName.getText()) {                          //StringBuilder al posto di "+" perché più efficiente
+                switch (EventName.getText()) {
                     case "" -> {
-                        EventName.setText(evento.name);
+                        EventName.setText(evento.getName());
 
                         StringBuilder sb = new StringBuilder();
                         sb.append(dateLCSV.getMonth())
@@ -103,7 +103,7 @@ public class FormController {
                                 .append(":")
                                 .append(dateLCSV.getMinute())
                                 .append("\n")
-                                .append(evento.description)
+                                .append(evento.getDescription())
                                 .append("\n");
 
                         EventInfo.setText(sb.toString());
@@ -112,7 +112,7 @@ public class FormController {
                     case "More events" -> {
                         StringBuilder sb = new StringBuilder();
                         sb.append("\n")
-                                .append(evento.name)
+                                .append(evento.getName())
                                 .append("\n")
                                 .append(dateLCSV.getMonth())
                                 .append(" ")
@@ -122,7 +122,7 @@ public class FormController {
                                 .append(":")
                                 .append(dateLCSV.getMinute())
                                 .append("\n")
-                                .append(evento.description);
+                                .append(evento.getDescription());
 
                         EventInfo.append(sb.toString());
                         ret = true;
@@ -135,7 +135,7 @@ public class FormController {
                                 .append("\n")
                                 .append(eventInfoTemp)
                                 .append("\n")
-                                .append(evento.name)
+                                .append(evento.getName())
                                 .append("\n")
                                 .append(dateLCSV.getMonth())
                                 .append(" ")
@@ -145,7 +145,7 @@ public class FormController {
                                 .append(":")
                                 .append(dateLCSV.getMinute())
                                 .append("\n")
-                                .append(evento.description)
+                                .append(evento.getDescription())
                                 .append("\n");
 
                         EventInfo.setText(sb.toString());

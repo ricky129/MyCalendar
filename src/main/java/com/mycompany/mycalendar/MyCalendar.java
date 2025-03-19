@@ -1,8 +1,10 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  */
-
 package com.mycompany.mycalendar;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  *
@@ -11,6 +13,17 @@ package com.mycompany.mycalendar;
 public class MyCalendar {
 
     public static void main(String args[]) {
+        Connection con = null;
+        try {
+            // Ottieni la connessione
+            con = DatabaseConnection.getConnection();
+            System.out.println("Connessione stabilita.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            // Chiusura della connessione
+            DatabaseConnection.closeConnection(con);
+        }
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
