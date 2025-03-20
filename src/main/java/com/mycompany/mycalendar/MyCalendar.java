@@ -3,32 +3,24 @@
  */
 package com.mycompany.mycalendar;
 
-import java.sql.Connection;
-import java.sql.SQLException;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 
 /**
  *
  * @author ricky
  */
 public class MyCalendar {
+    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
 
     public static void main(String args[]) {
-        Connection con = null;
         try {
-            // Ottieni la connessione
-            con = DatabaseConnection.getConnection();
-            System.out.println("Connessione stabilita.");
-        } catch (SQLException e) {
+            System.out.println("Hibernate initialized.");
+        } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            // Chiusura della connessione
-            DatabaseConnection.closeConnection(con);
         }
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
+
+        // Set Nimbus look and feel
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -36,22 +28,19 @@ public class MyCalendar {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(NewJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(NewJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(NewJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(NewJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
 
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                new NewJFrame().setVisible(true);
+        // Create and display the form
+        java.awt.EventQueue.invokeLater(() -> new NewJFrame().setVisible(true));
+
+        // Shutdown hook to close EMF
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (emf != null && emf.isOpen()) {
+                emf.close();
+                System.out.println("EntityManagerFactory closed.");
             }
-        });
+        }));
     }
 }

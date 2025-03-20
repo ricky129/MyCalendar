@@ -3,6 +3,7 @@ package com.mycompany.mycalendar;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.*;
 import javax.persistence.Table;
 
 /**
@@ -13,21 +14,31 @@ import javax.persistence.Table;
 @Table(name = "Events")
 public class Event {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "Id")
     private int Id;
     
-    @Column (name = "name", nullable = false, length = 20)
-    private String name, description;
+    @Column (name = "name", nullable = false, length = 50)
+    private String name;
+    @Column (name = "description", nullable = false, length = 200)
+    private String description;
+    @Column (name = "date", nullable = false)
     private LocalDateTime date;
+    @Column (name = "latitude", nullable = false)
     private double latitude;
+    @Column (name = "longitude", nullable = false)
     private double longitude;
+    @Column(name = "location", length = 255)
+    private String location;
 
-    public Event(int Id, String name, String description, LocalDateTime date, double latitude, double longitude) {
+    public Event(int Id, String name, String description, LocalDateTime date, double latitude, double longitude, String location) {
         this.Id = Id;
         this.name = name;
         this.description = description;
         this.date = date;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.location = location;
     }
 
     public int getId() {
@@ -77,16 +88,12 @@ public class Event {
     public void setDate(LocalDateTime date) {
         this.date = date;
     }
-    
-    @Override
-    public String toString() {
-        return "Event{" +
-                "id=" + Id +
-                ", name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", date=" + date +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
-                '}';
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

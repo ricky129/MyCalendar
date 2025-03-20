@@ -4,13 +4,11 @@
  */
 package com.mycompany.mycalendar;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.TypedQuery;
 
 /**
  *
@@ -18,95 +16,84 @@ import java.util.List;
  */
 public class EventDAOImpl implements IEventDAO {
 
+    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
+
+    private EntityManager getEntityManger() {
+        return emf.createEntityManager();
+    }
+
     @Override
-    public Event findById(int id, Connection con) {
+    public Event findById(int id) {
+        EntityManager em = getEntityManger();
         try {
-            String sql = "SELECT * FROM Events WHERE id = ?";
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setInt(1, id);
-            ResultSet result = statement.executeQuery();
-            if (result.next()) {
-                int Id = result.getInt("id");
-                String name = result.getString("name");
-                String description = result.getString("description");
-                LocalDateTime date = result.getObject(4, LocalDateTime.class);
-                double latitude = result.getDouble("latitude");
-                double longitude = result.getDouble("longitude");
-                return new Event(Id, name, description, date, latitude, longitude);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    @Override
-    public void save(Event event, Connection con) {
-        try{
-            String sql = "INSERT INTO Events (Id, name, description, date, latitude, longitude) VALUES (=, ?, ?, ?, ?, ?)";
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setInt(1, event.getId());
-            statement.setString(2, event.getName());
-            statement.setString(3, event.getDescription());
-            statement.setObject(4, event.getDate());
-            statement.setDouble(5, event.getLatitude());
-            statement.setDouble(6, event.getLongitude());
-            statement.executeUpdate();
-        } catch(SQLException e){
-            e.printStackTrace();
+            return em.find(Event.class, id);
+        } finally {
+            em.close();
         }
     }
 
     @Override
-    public void update(Event event, Connection con) {
-       try{
-            String sql = "UPDATE Events SET name = ?, description = ?, date = ?, latitude = ?, longitude = ? WHERE Id = ?";
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.setInt(1, event.getId()); //DA CHIEDERE A GROK SE L'ORIDNE E' IMPORTANTE
-            statement.setString(2, event.getName());
-            statement.setString(3, event.getDescription());
-            statement.setObject(4, event.getDate());
-            statement.setDouble(5, event.getLatitude());
-            statement.setDouble(6, event.getLongitude());
-            statement.executeUpdate();
-            System.out.println("Record Updated");
-        } catch(SQLException e){
+    public void save(Event event) {
+        EntityManager em = getEntityManger();
+        try {
+            em.getTransaction().begin();
+            em.persist(event);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            em.getTransaction().rollback();
             e.printStackTrace();
+        } finally {
+            em.close();
         }
     }
 
     @Override
-    public void delete(Event vent, Connection con) {
-        try{
-            String sql = "DELETE FROM Events WHERE Id = ?";
-            PreparedStatement statement = con.prepareStatement(sql);
-            statement.executeUpdate();
-            System.out.println("User deleted");
-        } catch(SQLException e){
+    public void update(Event event) {
+        EntityManager em = getEntityManger();
+        try {
+            em.getTransaction().begin();
+            em.merge(event);
+            em.getTransaction().commit();
+            System.out.println("Record updated");
+        } catch (Exception e) {
+            em.getTransaction().rollback();
             e.printStackTrace();
+        } finally {
+            em.close();
         }
     }
 
     @Override
-    public List<Event> findAll(Connection con) {
-        List<Event> events = new ArrayList<>();
-        try{
-            String sql = "SELECT FROM Events";
-            PreparedStatement statement = con.prepareStatement(sql);
-            ResultSet result = statement.executeQuery();
-            while(result.next()){
-                int Id = result.getInt("id");
-                String name = result.getString("name");
-                String description = result.getString("description");
-                LocalDateTime date = result.getObject(4, LocalDateTime.class);
-                double latitude = result.getDouble("latitude");
-                double longitude = result.getDouble("longitude");
-                Event event = new Event(Id, name, description, date, latitude, longitude);
-                events.add(event);
-            }
-        } catch(SQLException e){
+    public void delete(Event event) {
+        EntityManager em = getEntityManger();
+        try {
+            em.getTransaction().begin();
+            Event managedEvent = em.merge(event);
+            em.remove(managedEvent);
+            em.getTransaction().commit();
+            System.out.println("Event deleted");
+        } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            em.close();
         }
-        return events;
+    }
+
+    @Override
+    public List<Event> findAll() {
+        EntityManager em = getEntityManger();
+        try {
+            TypedQuery<Event> query = em.createQuery("SELECT e FROM Event e", Event.class);
+            return query.getResultList();
+        } finally {
+            em.close();
+        }
+    }
+    
+    //Close EMF when application shuts down
+    public static void shutdown() {
+        if (emf != null && emf.isOpen()) {
+            emf.close();
+        }
     }
 }

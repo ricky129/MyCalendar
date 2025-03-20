@@ -4,7 +4,6 @@
  */
 package com.mycompany.mycalendar;
 
-import java.sql.Connection;
 import java.util.List;
 
 /**
@@ -12,9 +11,9 @@ import java.util.List;
  * @author ricky
  */
 public interface IEventDAO {
-    Event findById(int id, Connection con);
-    void save(Event event, Connection con);
-    void update(Event event, Connection con);
-    void delete(Event vent, Connection con);
-    List<Event> findAll(Connection con);
+    Event findById(int id);
+    void save(Event event);
+    void update(Event event);
+    void delete(Event vent);
+    List<Event> findAll();
 }

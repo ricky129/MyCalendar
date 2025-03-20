@@ -6,7 +6,7 @@
     <persistence-unit name="MyCalendarPU" transaction-type="RESOURCE_LOCAL">
         <class>com.mycompany.mycalendar.Event</class>
         <properties>
-            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://192.168.1.251:3306/MyCalendarDB"/>
+            <property name="javax.persistence.jdbc.url" value="jdbc:mysql://192.168.1.122:3306/MyCalendarDB"/>
             <property name="javax.persistence.jdbc.user" value="username"/>
             <property name="javax.persistence.jdbc.password" value="password"/>
             <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
