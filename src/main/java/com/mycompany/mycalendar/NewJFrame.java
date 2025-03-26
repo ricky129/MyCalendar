@@ -12,22 +12,32 @@ import java.time.Month;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Date;
+import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Scene;
+import javafx.scene.web.WebView;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.swing.JDialog;
 import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import netscape.javascript.JSObject;
 
 /**
  *
  * @author ricky
  */
-public class NewJFrame extends javax.swing.JFrame {
+public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
     //EntityManagerFactory as a static field to avoid recreating it repeatedly
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
-    FormController FC1 = new FormController();
+    private final FormController FC1 = new FormController();
+    // JFXPanel to embed the JavaFX WebView (OSM map) in Swing
+    private JFXPanel fxPanel;
+    private double selectedLongitude;
+    private double selectedLatitude;
     /**
      * Creates new form NewJFrame
      */
@@ -37,7 +47,8 @@ public class NewJFrame extends javax.swing.JFrame {
         addTableClickListener();
         NewEventDescription.setEnabled(false);
         NewEventName.setEnabled(false);
-
+        initializeMap();
+        
         //LISTENER AL TEXT FIELD
         NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
 
@@ -97,7 +108,87 @@ public class NewJFrame extends javax.swing.JFrame {
             }
         });
     }
-
+    
+    // Method to initialize the JavaFX WebView with the OSM map
+    private void initializeMap() {
+        fxPanel = new JFXPanel(); // Create a JFXPanel to host JavaFX content in Swing
+        Platform.runLater(() -> { // Run JavaFX code on the JavaFX Application Thread
+            WebView webView = new WebView(); // Create a WebView to render the map HTML
+            webView.getEngine().load(getClass().getResource("/html/map.html").toExternalForm()); // Load the OSM map HTML
+            // Listener to set up the Java-JavaScript bridge once the page loads
+            webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, newState) -> {
+                if (newState == javafx.concurrent.Worker.State.SUCCEEDED) { // When the map loads successfully
+                    JSObject window = (JSObject) webView.getEngine().executeScript("window"); // Access the JavaScript window object
+                    window.setMember("javaCallback", this); // Bind this Java object to JavaScript’s javaCallback
+                }
+            });
+            fxPanel.setScene(new Scene(webView, 600, 400)); // Set the WebView scene with a 600x400 size
+        });
+    }
+    
+    // Method to display the OSM map in a dialog for location selection
+    private void showMapDialog() {
+        JDialog mapDialog = new JDialog(this, "Select Event Location", true);
+        mapDialog.setLayout(new java.awt.BorderLayout());
+        mapDialog.add(fxPanel, java.awt.BorderLayout.CENTER);
+        
+        javax.swing.JButton saveButton = new javax.swing.JButton("Save Location");
+        saveButton.addActionListener(e -> {
+            saveEventWithCoordinates();
+            mapDialog.dispose();
+        });
+        mapDialog.add(saveButton, java.awt.BorderLayout.SOUTH);
+        
+        mapDialog.pack();
+        mapDialog.setLocationRelativeTo(this);
+        mapDialog.setVisible(true);
+    }
+    
+    // Implementation of MapCallback interface to receive coordinates from the map
+    @Override
+    public void setCoordinates(double latitude, double longitude) {
+        this.selectedLatitude = latitude;
+        this.selectedLongitude = longitude;
+        System.out.println("Selected coordinates: " + latitude + "," + longitude);
+    }
+    
+    // Method to save the event with the selected coordinates to the database
+    private void saveEventWithCoordinates() {
+        Instant instant = ((Date) NewDate.getValue()).toInstant(); // Convert the spinner date to an Instant
+        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
+        LocalDateTime date = zonedDateTime.toLocalDateTime();
+        
+        EntityManager em = emf.createEntityManager();
+        try{
+            em.getTransaction().begin();
+            Event newEvent = new Event(
+            0,
+            NewEventName.getText(),
+            NewEventDescription.getText(),
+            date,
+            selectedLatitude,
+            selectedLongitude,
+            null    //TODO add reverse logic to get address and/or name
+            );
+            em.persist(newEvent); //persist the event to the database
+            em.getTransaction().commit();
+            
+            //Reset UI after saving
+            NewEventName.setText("");
+            NewEventDescription.setText("");
+            NewEvent.setText("");
+            NewEventDescription.setEnabled(false);
+            NewEventName.setEnabled(false);
+            FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
+        } catch(Exception e){
+            em.getTransaction().rollback();
+            e.printStackTrace();
+            System.out.println("Failed to add event to database");
+        } finally {
+            em.close();
+        }
+    }
+    
     /**
      * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The content of this method is always regenerated by the Form Editor.
      */
@@ -242,44 +333,9 @@ public class NewJFrame extends javax.swing.JFrame {
         if (NewEvent.getText().equals("New Event")) {
             NewEventDescription.setEnabled(true);
             NewEventName.setEnabled(true);
-        } else if (NewEvent.getText().equals("Add Event")) {
-            Instant instant = ((Date) NewDate.getValue()).toInstant();
-            ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
-            LocalDateTime date = zonedDateTime.toLocalDateTime();
-
-            EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
-            EntityManager em = emf.createEntityManager();
-            try {
-                em.getTransaction().begin();
-                Event newEvent = new Event(
-                        0, // ID will be auto-generated
-                        NewEventName.getText(),
-                        NewEventDescription.getText(),
-                        date,
-                        0.0, // Replace with actual latitude if available
-                        0.0, // Replace with actual longitude if available
-                        null
-                );
-                em.persist(newEvent);
-                em.getTransaction().commit();
-
-                // Clear fields and update UI
-                NewEventName.setText("");
-                NewEventDescription.setText("");
-                NewEvent.setText("New Event");
-                NewEventDescription.setEnabled(false);
-                NewEventName.setEnabled(false);
-                FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
-
-            } catch (Exception e) {
-                em.getTransaction().rollback();
-                e.printStackTrace();
-                System.out.println("Failed to add event to database");
-            } finally {
-                em.close();
-                emf.close();
-            }
-        }
+            showMapDialog();
+        } else if (NewEvent.getText().equals("Add Event"))
+            saveEventWithCoordinates();
     }//GEN-LAST:event_NewEventMouseClicked
 
     /**

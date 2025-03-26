@@ -106,8 +106,9 @@ public class FormController {
                                     .append(date.getMinute())
                                     .append("\n")
                                     .append(event.getDescription())
-                                    .append("\n");
-
+                                    .append("\n")
+                                    .append("Lat: ").append(event.getLatitude())
+                                    .append(", Lon: ").append(event.getLongitude());
                             EventInfo.setText(sb.toString());
                             ret = true;
                         }
@@ -124,7 +125,10 @@ public class FormController {
                                     .append(":")
                                     .append(date.getMinute())
                                     .append("\n")
-                                    .append(event.getDescription());
+                                    .append(event.getDescription())
+                                    .append("\n")
+                                    .append("Lat: ").append(event.getLatitude())
+                                    .append(", Lon: ").append(event.getLongitude());
 
                             EventInfo.append(sb.toString());
                             ret = true;
@@ -148,7 +152,9 @@ public class FormController {
                                     .append(date.getMinute())
                                     .append("\n")
                                     .append(event.getDescription())
-                                    .append("\n");
+                                    .append("\n")
+                                    .append("Lat: ").append(event.getLatitude())
+                                    .append(", Lon: ").append(event.getLongitude());
 
                             EventInfo.setText(sb.toString());
                             EventName.setText("More events");
