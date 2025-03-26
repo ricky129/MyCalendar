@@ -36,8 +36,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     private final FormController FC1 = new FormController();
     // JFXPanel to embed the JavaFX WebView (OSM map) in Swing
     private JFXPanel fxPanel;
-    private double selectedLongitude;
-    private double selectedLatitude;
+    private double selectedLongitude = 0.0;
+    private double selectedLatitude = 0.0;
     /**
      * Creates new form NewJFrame
      */
@@ -111,18 +111,37 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     
     // Method to initialize the JavaFX WebView with the OSM map
     private void initializeMap() {
-        fxPanel = new JFXPanel(); // Create a JFXPanel to host JavaFX content in Swing
-        Platform.runLater(() -> { // Run JavaFX code on the JavaFX Application Thread
-            WebView webView = new WebView(); // Create a WebView to render the map HTML
-            webView.getEngine().load(getClass().getResource("/html/map.html").toExternalForm()); // Load the OSM map HTML
-            // Listener to set up the Java-JavaScript bridge once the page loads
-            webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, newState) -> {
-                if (newState == javafx.concurrent.Worker.State.SUCCEEDED) { // When the map loads successfully
-                    JSObject window = (JSObject) webView.getEngine().executeScript("window"); // Access the JavaScript window object
-                    window.setMember("javaCallback", this); // Bind this Java object to JavaScript’s javaCallback
-                }
-            });
-            fxPanel.setScene(new Scene(webView, 600, 400)); // Set the WebView scene with a 600x400 size
+        fxPanel = new JFXPanel();
+        Platform.runLater(() -> {
+            WebView webView = new WebView();
+            webView.getEngine().setUserAgent("MyCalendarApp/1.0 (ricca@example.com)");
+            
+            //enable JavaScritp console logging for debugging
+            webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
+
+            java.net.URL resourceUrl = getClass().getResource("/html/map.html");
+            if (resourceUrl == null) {
+                System.err.println("Error: Could not find /html/map.html in resources");
+                webView.getEngine().loadContent("<h1>Error: Map file not found</h1>");
+            } else {
+                System.out.println("Loading map from: " + resourceUrl.toExternalForm());
+                webView.getEngine().load(resourceUrl.toExternalForm());
+                webView.getEngine().setOnError(event -> {
+                    System.err.println("WebView error: " + event.getMessage());
+                });
+                webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, newState) -> {
+                    if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
+                        JSObject window = (JSObject) webView.getEngine().executeScript("window");
+                        window.setMember("javaCallback", this);
+                        webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
+                        System.out.println("Map loaded successfully in WebView");
+                    }
+                });
+            }
+            // Set a larger initial size
+            Scene scene = new Scene(webView, 800, 600);
+            fxPanel.setScene(scene);
+            fxPanel.setPreferredSize(new java.awt.Dimension(800, 600));
         });
     }
     
@@ -131,16 +150,40 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         JDialog mapDialog = new JDialog(this, "Select Event Location", true);
         mapDialog.setLayout(new java.awt.BorderLayout());
         mapDialog.add(fxPanel, java.awt.BorderLayout.CENTER);
-        
+
         javax.swing.JButton saveButton = new javax.swing.JButton("Save Location");
         saveButton.addActionListener(e -> {
             saveEventWithCoordinates();
             mapDialog.dispose();
         });
         mapDialog.add(saveButton, java.awt.BorderLayout.SOUTH);
-        
+
+         // Set explicit sizes for the dialog
+        mapDialog.setMinimumSize(new java.awt.Dimension(800, 600));
+        mapDialog.setPreferredSize(new java.awt.Dimension(800, 600));
         mapDialog.pack();
         mapDialog.setLocationRelativeTo(this);
+
+        // Ensure the map resizes when the dialog is shown or resized
+        mapDialog.addComponentListener(new java.awt.event.ComponentAdapter() {
+            @Override
+            public void componentShown(java.awt.event.ComponentEvent e) {
+                System.out.println("Dialog shown, size: " + mapDialog.getSize());
+                Platform.runLater(() -> {
+                    WebView webView = (WebView) fxPanel.getScene().getRoot();
+                    webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
+                });
+            }
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                System.out.println("Dialog shown, size: " + mapDialog.getSize());
+                Platform.runLater(() -> {
+                    WebView webView = (WebView) fxPanel.getScene().getRoot();
+                    webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
+                });
+            }
+        });
+
         mapDialog.setVisible(true);
     }
     
