@@ -3,6 +3,7 @@ package com.mycompany.mycalendar;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
+import java.time.temporal.ChronoUnit;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
@@ -68,17 +69,22 @@ public class FormController {
         EntityManager em = emf.createEntityManager();
 
         try {
-            //Query events for the given date, ignoring time
+            LocalDateTime startOfDay = dateFromUser.truncatedTo(ChronoUnit.DAYS);// e.g., 2025-01-01 00:00:00
+            LocalDateTime endOfDay = startOfDay.plusDays(1);
+            
             TypedQuery<Event> query = em.createQuery(
-                    //FUNCTION('DATE', ...) to extract only the date part from the date column in the database, matching it with date.toLocalDate()
-                    "SELECT e FROM Event e WHERE FUNCTION('DATE', e.date) = :date",
-                    Event.class
+                "SELECT e FROM Event e WHERE e.date >= :start AND e.date < :end",
+                Event.class
             );
-            query.setParameter("date", dateFromUser);
+
+            query.setParameter("start", startOfDay);
+            query.setParameter("end", endOfDay);
+            System.out.println("Querying with dateFromUser: " + dateFromUser);
             var events = query.getResultList();
+            System.out.println(events.toString());
 
             if (events == null || events.isEmpty()) {
-                System.out.print("No events found for date " + dateFromUser.toLocalDate());
+                System.out.println("No events found for date " + dateFromUser.toLocalDate());
                 return false;
             }
 

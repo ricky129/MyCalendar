@@ -11,7 +11,7 @@ import javax.persistence.Table;
  * @author ricky
  */
 @Entity
-@Table(name = "Events")
+@Table(name = "events")
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +39,9 @@ public class Event {
         this.latitude = latitude;
         this.longitude = longitude;
         this.location = location;
+    }
+
+    public Event() {
     }
 
     public int getId() {
