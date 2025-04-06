@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
@@ -22,6 +24,33 @@ public class FormController {
 
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
     private int currentYear = Year.now().getValue();
+    private List moreCoodinatesList = new ArrayList<>();
+    private int counter = 0;
+    
+    public int getCounter() {
+        return counter;
+    }
+
+    public static EntityManagerFactory getEmf() {
+        return emf;
+    }
+
+    public int getCurrentYear() {
+        return currentYear;
+    }
+
+    public List getMoreCoodinatesList() {
+        return moreCoodinatesList;
+    }
+    
+    public double getCoordinatesTemp(){
+        double ret = 0;
+        if (counter < moreCoodinatesList.size()){
+            ret = (double) moreCoodinatesList.get(counter);
+            counter ++;
+        }
+        return ret;
+    }
 
     private boolean isLeapYear(int year) {
         return Year.of(year).isLeap();
@@ -62,7 +91,7 @@ public class FormController {
             }
         }
     }
-
+    
     public boolean updateInfoBox(LocalDateTime dateFromUser, JTextField EventName, JTextArea EventInfo) {
         boolean ret = false;
         String eventInfoTemp;
@@ -108,7 +137,11 @@ public class FormController {
                                     .append(event.getDescription())
                                     .append("\n")
                                     .append("Lat: ").append(event.getLatitude())
-                                    .append(", Lon: ").append(event.getLongitude());
+                                    .append(", Lon: ").append(event.getLongitude())
+                                    .append("\n");
+                            
+                            moreCoodinatesList.add(event.getLatitude());
+                            moreCoodinatesList.add(event.getLongitude());
                             EventInfo.setText(sb.toString());
                             ret = true;
                         }
@@ -128,8 +161,11 @@ public class FormController {
                                     .append(event.getDescription())
                                     .append("\n")
                                     .append("Lat: ").append(event.getLatitude())
-                                    .append(", Lon: ").append(event.getLongitude());
+                                    .append(", Lon: ").append(event.getLongitude())
+                                    .append("\n");
 
+                            moreCoodinatesList.add(event.getLatitude());
+                            moreCoodinatesList.add(event.getLongitude());
                             EventInfo.append(sb.toString());
                             ret = true;
                         }
@@ -154,8 +190,11 @@ public class FormController {
                                     .append(event.getDescription())
                                     .append("\n")
                                     .append("Lat: ").append(event.getLatitude())
-                                    .append(", Lon: ").append(event.getLongitude());
+                                    .append(", Lon: ").append(event.getLongitude())
+                                    .append("\n");
 
+                            moreCoodinatesList.add(event.getLatitude());
+                            moreCoodinatesList.add(event.getLongitude());
                             EventInfo.setText(sb.toString());
                             EventName.setText("More events");
                             ret = true;

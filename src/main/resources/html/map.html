@@ -13,6 +13,8 @@
     <div id="map"></div>
     <script>
         var map;
+        var marker;
+        
         function initMap() {
             // Log the container size for debugging
             var mapDiv = document.getElementById('map');
@@ -37,9 +39,8 @@
             }).addTo(map);
 
             // Add a default marker
-            var marker = L.marker([51.505, -0.09]).addTo(map);
-            window.javaCallback.setCoordinates(51.505, -0.09);
-
+            marker = L.marker([51.505, -0.09]).addTo(map);   
+            
             // Ensure the map adjusts to the container size
             setTimeout(function() {
                 map.invalidateSize();
@@ -72,6 +73,14 @@
         window.onload = function() {
             setTimeout(initMap, 500); // Delay to ensure dialog is visible
         };
+        
+        // Function to update the map's center and marker
+     function updateMapCenter(latitude, longitude) {
+         var newLatLng = new L.LatLng(latitude, longitude);
+         map.setView(newLatLng, 13); // You can adjust the zoom level if needed
+         marker.setLatLng(newLatLng);
+     }
+     
     </script>
 </body>
 </html>
