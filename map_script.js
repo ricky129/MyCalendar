@@ -1,18 +1,4 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>OpenStreetMap</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <style>
-        #map { height: 100%; width: 100%; position: absolute; top: 0; left: 0; }
-        html, body { height: 100%; width: 100%; margin: 0; padding: 0; overflow: hidden; }
-    </style>
-</head>
-<body>
-    <div id="map"></div>
-    <script>
-        var map;
+var map;
         function initMap() {
             // Log the container size for debugging
             var mapDiv = document.getElementById('map');
@@ -36,9 +22,8 @@
                 zoomOffset: 0
             }).addTo(map);
 
-            // Add a default marker
+            // Add a marker
             var marker = L.marker([51.505, -0.09]).addTo(map);
-            window.javaCallback.setCoordinates(51.505, -0.09);
 
             // Ensure the map adjusts to the container size
             setTimeout(function() {
@@ -72,6 +57,3 @@
         window.onload = function() {
             setTimeout(initMap, 500); // Delay to ensure dialog is visible
         };
-    </script>
-</body>
-</html>

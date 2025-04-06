@@ -114,7 +114,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         fxPanel = new JFXPanel();
         Platform.runLater(() -> {
             WebView webView = new WebView();
-            webView.getEngine().setUserAgent("MyCalendarApp/1.0 (ricca@example.com)");
+            webView.getEngine().setUserAgent("MyCalendarApp/1.0 (riccardomarchesini036@example.com)");
             
             //enable JavaScritp console logging for debugging
             webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
@@ -153,7 +153,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
         javax.swing.JButton saveButton = new javax.swing.JButton("Save Location");
         saveButton.addActionListener(e -> {
-            saveEventWithCoordinates();
             mapDialog.dispose();
         });
         mapDialog.add(saveButton, java.awt.BorderLayout.SOUTH);
@@ -220,8 +219,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             NewEventName.setText("");
             NewEventDescription.setText("");
             NewEvent.setText("");
-            NewEventDescription.setEnabled(false);
-            NewEventName.setEnabled(false);
+            /*NewEventDescription.setEnabled(false);
+            NewEventName.setEnabled(false);*/
             FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
         } catch(Exception e){
             em.getTransaction().rollback();
