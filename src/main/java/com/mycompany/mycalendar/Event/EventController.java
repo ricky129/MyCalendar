@@ -27,6 +27,9 @@ import javax.swing.JTextField;
 public class EventController {
     
     FormController FC1 = new FormController();
+
+    public EventController() {
+    }
     
     // Method to save the event with the selected coordinates to the database
     public void saveEventWithCoordinates(
