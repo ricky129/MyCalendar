@@ -26,7 +26,7 @@ import javax.swing.JTextField;
  */
 public class EventController {
     
-    FormController FC1 = new FormController();
+    FormController FC1 = FormController.getInstance();
 
     public EventController() {
     }

@@ -24,11 +24,16 @@ import javax.swing.table.DefaultTableModel;
 public class FormController {
 
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
+    private static final FormController instance = new FormController();
     private int currentYear = Year.now().getValue();
     private List moreCoodinatesList = new ArrayList<>();
     private int counter = 0;
 
-    public FormController() {
+    private FormController() {
+    }
+
+    public static FormController getInstance() {
+        return instance;
     }
     
     public int getCounter() {
@@ -47,15 +52,6 @@ public class FormController {
         return moreCoodinatesList;
     }
     
-    public double getCoordinatesTemp(){
-        double ret = 0;
-        if (counter < moreCoodinatesList.size()){
-            ret = (double) moreCoodinatesList.get(counter);
-            counter ++;
-        }
-        return ret;
-    }
-
     private boolean isLeapYear(int year) {
         return Year.of(year).isLeap();
     }
@@ -144,8 +140,9 @@ public class FormController {
                                     .append(", Lon: ").append(event.getLongitude())
                                     .append("\n");
                             
-                            moreCoodinatesList.add(event.getLatitude());
-                            moreCoodinatesList.add(event.getLongitude());
+                            moreCoodinatesList.add((double)event.getLatitude());
+                            moreCoodinatesList.add((double)event.getLongitude());
+                            System.out.println(moreCoodinatesList.toString());
                             EventInfo.setText(sb.toString());
                             ret = true;
                         }
@@ -168,8 +165,9 @@ public class FormController {
                                     .append(", Lon: ").append(event.getLongitude())
                                     .append("\n");
 
-                            moreCoodinatesList.add(event.getLatitude());
-                            moreCoodinatesList.add(event.getLongitude());
+                            moreCoodinatesList.add((double)event.getLatitude());
+                            moreCoodinatesList.add((double)event.getLongitude());
+                            System.out.println(moreCoodinatesList.toString());
                             EventInfo.append(sb.toString());
                             ret = true;
                         }
@@ -197,8 +195,9 @@ public class FormController {
                                     .append(", Lon: ").append(event.getLongitude())
                                     .append("\n");
 
-                            moreCoodinatesList.add(event.getLatitude());
-                            moreCoodinatesList.add(event.getLongitude());
+                            moreCoodinatesList.add((double)event.getLatitude());
+                            moreCoodinatesList.add((double)event.getLongitude());
+                            System.out.println(moreCoodinatesList.toString());
                             EventInfo.setText(sb.toString());
                             EventName.setText("More events");
                             ret = true;
@@ -211,6 +210,17 @@ public class FormController {
         } finally {
             em.close();
         }
+        return ret;
+    }
+    
+    public double getCoordinatesTEMP(){
+        System.out.println("DEBUG: " + moreCoodinatesList.toString());
+        double ret;
+        if(!moreCoodinatesList.isEmpty())
+           ret = (double) moreCoodinatesList.getFirst();
+        else
+            return -200;
+        moreCoodinatesList.removeFirst();
         return ret;
     }
 }

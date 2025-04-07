@@ -27,12 +27,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
     //EntityManagerFactory as a static field to avoid recreating it repeatedly
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
-    private final FormController FC1 = new FormController();
+    private final FormController FC1 = FormController.getInstance();
     // JFXPanel to embed the JavaFX WebView (OSM map) in Swing
     private JFXPanel fxPanel;
     private WebView webView;
     
-    private EventController EC1 = new EventController();
+    private final EventController EC1 = new EventController();
     
     MapsController MC1 = new MapsController();
 
@@ -102,10 +102,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                     int year = Integer.parseInt(jComboBox1.getSelectedItem().toString());
                     LocalDateTime selectedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
                     System.out.println("Data clickata: " + selectedDate);
+                    //clear the list from the previous cell's event's coordinates
+                    FC1.getMoreCoodinatesList().clear();
                     if (!FC1.updateInfoBox(selectedDate, EventName, EventInfo)) {
                         EventName.setText("");
                         EventInfo.setText("No event found!");
-                    }
+                    } else
+                        MC1.moveMapNext(webView);
                 }
             }
         });
@@ -124,7 +127,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         fxPanel = new JFXPanel();
         Platform.runLater(() -> {
             webView = new WebView();
-            MC1.initializeMap(webView, fxPanel, mapPanel);
+            MC1.initializeMap(webView, fxPanel, mapPanel, this);
         });
     }
     
@@ -325,6 +328,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
     private void NextMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NextMapMouseClicked
         MC1.moveMapNext(webView);
+       // System.out.println(FC1.getMoreCoodinatesList().toString());
     }//GEN-LAST:event_NextMapMouseClicked
 
     private void PreviousMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PreviousMapMouseClicked

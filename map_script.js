@@ -1,4 +1,3 @@
-var map;
         function initMap() {
             // Log the container size for debugging
             var mapDiv = document.getElementById('map');
@@ -10,7 +9,7 @@ var map;
                 return;
             }
 
-            map = L.map('map', {
+            var map = L.map('map', {
                 center: [51.505, -0.09], // Default: London
                 zoom: 13,
                 zoomControl: true

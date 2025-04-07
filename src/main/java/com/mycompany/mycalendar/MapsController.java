@@ -16,7 +16,10 @@ import netscape.javascript.JSObject;
  * @author ricky
  */
 public class MapsController {
-    
+
+    private MapCallback mapCallback;
+    FormController FC1 = FormController.getInstance();
+
     private double selectedLongitude = 0.0;
     private double selectedLatitude = 0.0;
 
@@ -35,25 +38,35 @@ public class MapsController {
     public void setSelectedLatitude(double selectedLatitude) {
         this.selectedLatitude = selectedLatitude;
     }
-    
+
     public void moveMapNext(WebView webview) {
-        if(webview != null) {
-            Platform.runLater(() -> {
-                webview.getEngine().executeScript("map.setView([48.8566, 2.3522], 13);");
-        });
+        double lat = FC1.getCoordinatesTEMP();
+        double lon = FC1.getCoordinatesTEMP();
+        if (lat == -200 && lon == -200)
+            System.out.println("Coordinates not valid");
+        else {
+            if (webview != null) {
+                Platform.runLater(() -> {
+                    webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);");
+                });
+            } else
+                System.out.println("webview is null");
         }
     }
-    
+
     public void moveMapPrevious(WebView webview) {
-        if(webview != null) {
+        double lat = FC1.getCoordinatesTEMP();
+        double lon = FC1.getCoordinatesTEMP();
+        if (webview != null) {
             Platform.runLater(() -> {
-                webview.getEngine().executeScript("map.setView([52.5200, 13.4050], 13);");
+                webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);");
             });
         }
     }
-    
+
     // Method to initialize the JavaFX WebView with the OSM map
-    public void initializeMap(WebView webView, JFXPanel fxPanel, JPanel mapPanel) {
+    public void initializeMap(WebView webView, JFXPanel fxPanel, JPanel mapPanel, MapCallback callback) {
+        this.mapCallback = callback;
 
         Platform.runLater(() -> {
             webView.getEngine().setUserAgent("MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)");
@@ -74,7 +87,7 @@ public class MapsController {
                 webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, newState) -> {
                     if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
                         JSObject window = (JSObject) webView.getEngine().executeScript("window");
-                        window.setMember("javaCallback", this);
+                        window.setMember("javaCallback", this.mapCallback);
                         webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
                         System.out.println("Map loaded successfully in WebView");
                     }

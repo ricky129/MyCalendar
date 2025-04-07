@@ -48,11 +48,10 @@
             }, 100);
 
             map.on('click', function(e) {
-                if (marker) {
+                if (marker)
                     marker.setLatLng(e.latlng);
-                } else {
+                else
                     marker = L.marker(e.latlng).addTo(map);
-                }
                 window.javaCallback.setCoordinates(e.latlng.lat, e.latlng.lng);
             });
 
