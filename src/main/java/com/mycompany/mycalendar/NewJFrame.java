@@ -4,26 +4,20 @@
  */
 package com.mycompany.mycalendar;
 
+import com.mycompany.mycalendar.Event.EventController;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
 import javafx.scene.web.WebView;
-import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JPanel;
-import netscape.javascript.JSObject;
 
 /**
  *
@@ -36,13 +30,15 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     private final FormController FC1 = new FormController();
     // JFXPanel to embed the JavaFX WebView (OSM map) in Swing
     private JFXPanel fxPanel;
-    /*
-    private double currentLongitude = 0.0;
-    private double currentLatitude = 0.0;
-     */
+    private WebView webView;
+    
+    private EventController EC1 = new EventController();
+    
+    MapsController MC1 = new MapsController();
+
     private double selectedLongitude = 0.0;
     private double selectedLatitude = 0.0;
-
+    
     /**
      * Creates new form NewJFrame
      */
@@ -115,44 +111,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         });
     }
 
-    // Method to initialize the JavaFX WebView with the OSM map
-    private void initializeMap() {
-        fxPanel = new JFXPanel();
-        Platform.runLater(() -> {
-            WebView webView = new WebView();
-            webView.getEngine().setUserAgent("MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)");
-
-            //enable JavaScritp console logging for debugging
-            webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
-
-            java.net.URL resourceUrl = getClass().getResource("/html/map.html");
-            if (resourceUrl == null) {
-                System.err.println("Error: Could not find /html/map.html in resources");
-                webView.getEngine().loadContent("<h1>Error: Map file not found</h1>");
-            } else {
-                System.out.println("Loading map from: " + resourceUrl.toExternalForm());
-                webView.getEngine().load(resourceUrl.toExternalForm());
-                webView.getEngine().setOnError(event -> {
-                    System.err.println("WebView error: " + event.getMessage());
-                });
-                webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, newState) -> {
-                    if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                        JSObject window = (JSObject) webView.getEngine().executeScript("window");
-                        window.setMember("javaCallback", this);
-                        webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
-                        System.out.println("Map loaded successfully in WebView");
-                    }
-                });
-            }
-            // Set a larger initial size
-            Scene scene = new Scene(webView, 800, 600);
-            fxPanel.setScene(scene);
-            fxPanel.setPreferredSize(new java.awt.Dimension(800, 600));
-        });
-        mapPanel.add(fxPanel, java.awt.BorderLayout.CENTER);
-        mapPanel.setVisible(true);
-    }
-    
     // Implementation of MapCallback interface to receive coordinates from the map
     @Override
     public void setCoordinates(double latitude, double longitude) {
@@ -161,43 +119,15 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         System.out.println("Selected coordinates: " + latitude + "," + longitude);
     }
 
-    // Method to save the event with the selected coordinates to the database
-    private void saveEventWithCoordinates() {
-        Instant instant = ((Date) NewDate.getValue()).toInstant(); // Convert the spinner date to an Instant
-        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
-        LocalDateTime date = zonedDateTime.toLocalDateTime();
-
-        EntityManager em = emf.createEntityManager();
-        try {
-            em.getTransaction().begin();
-            Event newEvent = new Event(
-                    0,
-                    NewEventName.getText(),
-                    NewEventDescription.getText(),
-                    date,
-                    selectedLatitude,
-                    selectedLongitude,
-                    null //TODO add reverse logic to get address and/or name
-            );
-            em.persist(newEvent); //persist the event to the database
-            em.getTransaction().commit();
-
-            //Reset UI after saving
-            NewEventName.setText("");
-            NewEventDescription.setText("");
-            NewEvent.setText("");
-            /*NewEventDescription.setEnabled(false);
-            NewEventName.setEnabled(false);*/
-            FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
-        } catch (Exception e) {
-            em.getTransaction().rollback();
-            e.printStackTrace();
-            System.out.println("Failed to add event to database");
-        } finally {
-            em.close();
-        }
+    // Method to initialize the JavaFX WebView with the OSM map
+    private void initializeMap() {
+        fxPanel = new JFXPanel();
+        Platform.runLater(() -> {
+            webView = new WebView();
+            MC1.initializeMap(webView, fxPanel, mapPanel);
+        });
     }
-
+    
     /**
      * This method is called from within the constructor to initialize the form. WARNING: Do NOT modify this code. The content of this method is always regenerated by the Form Editor.
      */
@@ -205,6 +135,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     private void initComponents() {
 
         jDialog1 = new javax.swing.JDialog();
+        jButton1 = new javax.swing.JButton();
         NewEventName = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
         jTable1 = new javax.swing.JTable();
@@ -218,6 +149,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         jScrollPane3 = new javax.swing.JScrollPane();
         NewEventDescription = new javax.swing.JTextArea();
         mapPanel = new javax.swing.JPanel();
+        NextMap = new javax.swing.JButton();
+        PreviousMap = new javax.swing.JButton();
 
         javax.swing.GroupLayout jDialog1Layout = new javax.swing.GroupLayout(jDialog1.getContentPane());
         jDialog1.getContentPane().setLayout(jDialog1Layout);
@@ -229,6 +162,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             jDialog1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 300, Short.MAX_VALUE)
         );
+
+        jButton1.setText("jButton1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -288,15 +223,33 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
         mapPanel.setLayout(new java.awt.BorderLayout());
 
+        NextMap.setText("Next");
+        NextMap.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                NextMapMouseClicked(evt);
+            }
+        });
+
+        PreviousMap.setText("Previous");
+        PreviousMap.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                PreviousMapMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(mapPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
+                        .addComponent(PreviousMap, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(NextMap, javax.swing.GroupLayout.PREFERRED_SIZE, 429, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(mapPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
@@ -338,7 +291,11 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                         .addComponent(NewDate, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 335, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(mapPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(mapPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(NextMap)
+                    .addComponent(PreviousMap))
                 .addContainerGap())
         );
 
@@ -356,15 +313,23 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
         FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
     }//GEN-LAST:event_jComboBox2ActionPerformed
-
+    
     private void NewEventMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NewEventMouseClicked
         if (NewEvent.getText().equals("New Event")) {
             NewEventDescription.setEnabled(true);
             NewEventName.setEnabled(true);
             mapPanel.setVisible(true);
         } else if (NewEvent.getText().equals("Add Event"))
-            saveEventWithCoordinates();
+            EC1.saveEventWithCoordinates(NewDate, emf, NewEventName, NewEventDescription, MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, jTable1, jComboBox2);
     }//GEN-LAST:event_NewEventMouseClicked
+
+    private void NextMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NextMapMouseClicked
+        MC1.moveMapNext(webView);
+    }//GEN-LAST:event_NextMapMouseClicked
+
+    private void PreviousMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PreviousMapMouseClicked
+        MC1.moveMapPrevious(webView);
+    }//GEN-LAST:event_PreviousMapMouseClicked
 
     public String getEventName() {
         return EventName.getText();
@@ -384,6 +349,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     private javax.swing.JButton NewEvent;
     private javax.swing.JTextArea NewEventDescription;
     private javax.swing.JTextField NewEventName;
+    private javax.swing.JButton NextMap;
+    private javax.swing.JButton PreviousMap;
+    private javax.swing.JButton jButton1;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JDialog jDialog1;

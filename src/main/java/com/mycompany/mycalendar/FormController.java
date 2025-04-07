@@ -1,5 +1,6 @@
 package com.mycompany.mycalendar;
 
+import com.mycompany.mycalendar.Event.Event;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
@@ -26,6 +27,9 @@ public class FormController {
     private int currentYear = Year.now().getValue();
     private List moreCoodinatesList = new ArrayList<>();
     private int counter = 0;
+
+    public FormController() {
+    }
     
     public int getCounter() {
         return counter;
