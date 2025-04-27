@@ -222,7 +222,7 @@ public class FormController {
         double ret;
         if(!moreCoordinatesList.isEmpty()){
            ret = (double) moreCoordinatesList.get(MoreCoordinatesCurrentIndex);
-           MoreCoordinatesCurrentIndex++;
+               MoreCoordinatesCurrentIndex++;
         }
         else
             return -200;

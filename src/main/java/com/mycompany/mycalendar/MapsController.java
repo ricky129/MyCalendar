@@ -50,8 +50,9 @@ public class MapsController {
     
 
     public void moveMapPrevious(WebView webview) {
-        double lat = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex()-2);
-        double lon = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex()-1);
+        double lat = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex()-4);
+        double lon = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex()-3);
+        System.out.println("lat:" + lat + " lon " + lon);
         if (webview != null) {
             Platform.runLater(() -> {
                 webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);");

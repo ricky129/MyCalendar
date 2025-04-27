@@ -3,7 +3,7 @@
  * Created: 26 Mar 2025
  */
 USE MyCalendarDB;
-
+TRUNCATE TABLE Events;
 INSERT INTO Events (name, description, date, latitude, longitude, location) VALUES
     ('Project Meeting', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 51.5074000, -0.1278000, 'London, UK'),
     ('Project2 Meeting2', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 40.7128000, -74.0060000, 'New York, USA'),

@@ -324,7 +324,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
     private void NextMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NextMapMouseClicked
         MC1.moveMapNext(webView);
-       // System.out.println(FC1.getMoreCoodinatesList().toString());
     }//GEN-LAST:event_NextMapMouseClicked
 
     private void PreviousMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PreviousMapMouseClicked
