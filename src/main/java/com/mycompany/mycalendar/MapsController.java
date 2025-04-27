@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.mycompany.mycalendar;
 
 import javafx.application.Platform;
@@ -40,11 +36,10 @@ public class MapsController {
     }
 
     public void moveMapNext(WebView webview) {
+
+        System.out.println(FC1.getMoreCoordinatesCurrentIndex());
         double lat = FC1.getCoordinatesTEMP();
         double lon = FC1.getCoordinatesTEMP();
-        if (lat == -200 && lon == -200)
-            System.out.println("Coordinates not valid");
-        else {
             if (webview != null) {
                 Platform.runLater(() -> {
                     webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);");
@@ -52,16 +47,17 @@ public class MapsController {
             } else
                 System.out.println("webview is null");
         }
-    }
+    
 
     public void moveMapPrevious(WebView webview) {
-        double lat = FC1.getCoordinatesTEMP();
-        double lon = FC1.getCoordinatesTEMP();
+        double lat = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex()-2);
+        double lon = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex()-1);
         if (webview != null) {
             Platform.runLater(() -> {
                 webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);");
             });
-        }
+        } else
+            System.out.println("webview is null");
     }
 
     // Method to initialize the JavaFX WebView with the OSM map

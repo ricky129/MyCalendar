@@ -26,18 +26,22 @@ public class FormController {
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
     private static final FormController instance = new FormController();
     private int currentYear = Year.now().getValue();
-    private List moreCoodinatesList = new ArrayList<>();
-    private int counter = 0;
+    private List moreCoordinatesList = new ArrayList<>();
+    public int MoreCoordinatesCurrentIndex = 0;
+
+    public int getMoreCoordinatesCurrentIndex() {
+        return MoreCoordinatesCurrentIndex;
+    }
+
+    public void setMoreCoordinatesCurrentIndex(int MoreCoordinatesCurrentIndex) {
+        this.MoreCoordinatesCurrentIndex = MoreCoordinatesCurrentIndex;
+    }
 
     private FormController() {
     }
 
     public static FormController getInstance() {
         return instance;
-    }
-    
-    public int getCounter() {
-        return counter;
     }
 
     public static EntityManagerFactory getEmf() {
@@ -48,8 +52,8 @@ public class FormController {
         return currentYear;
     }
 
-    public List getMoreCoodinatesList() {
-        return moreCoodinatesList;
+    public List getMoreCoordinatesList() {
+        return moreCoordinatesList;
     }
     
     private boolean isLeapYear(int year) {
@@ -140,9 +144,9 @@ public class FormController {
                                     .append(", Lon: ").append(event.getLongitude())
                                     .append("\n");
                             
-                            moreCoodinatesList.add((double)event.getLatitude());
-                            moreCoodinatesList.add((double)event.getLongitude());
-                            System.out.println(moreCoodinatesList.toString());
+                            moreCoordinatesList.add((double)event.getLatitude());
+                            moreCoordinatesList.add((double)event.getLongitude());
+                            System.out.println(moreCoordinatesList.toString());
                             EventInfo.setText(sb.toString());
                             ret = true;
                         }
@@ -165,9 +169,9 @@ public class FormController {
                                     .append(", Lon: ").append(event.getLongitude())
                                     .append("\n");
 
-                            moreCoodinatesList.add((double)event.getLatitude());
-                            moreCoodinatesList.add((double)event.getLongitude());
-                            System.out.println(moreCoodinatesList.toString());
+                            moreCoordinatesList.add((double)event.getLatitude());
+                            moreCoordinatesList.add((double)event.getLongitude());
+                            System.out.println(moreCoordinatesList.toString());
                             EventInfo.append(sb.toString());
                             ret = true;
                         }
@@ -195,9 +199,9 @@ public class FormController {
                                     .append(", Lon: ").append(event.getLongitude())
                                     .append("\n");
 
-                            moreCoodinatesList.add((double)event.getLatitude());
-                            moreCoodinatesList.add((double)event.getLongitude());
-                            System.out.println(moreCoodinatesList.toString());
+                            moreCoordinatesList.add((double)event.getLatitude());
+                            moreCoordinatesList.add((double)event.getLongitude());
+                            System.out.println(moreCoordinatesList.toString());
                             EventInfo.setText(sb.toString());
                             EventName.setText("More events");
                             ret = true;
@@ -213,14 +217,16 @@ public class FormController {
         return ret;
     }
     
-    public double getCoordinatesTEMP(){
-        System.out.println("DEBUG: " + moreCoodinatesList.toString());
+     public double getCoordinatesTEMP(){
+        System.out.println("DEBUG: " + moreCoordinatesList.toString());
         double ret;
-        if(!moreCoodinatesList.isEmpty())
-           ret = (double) moreCoodinatesList.getFirst();
+        if(!moreCoordinatesList.isEmpty()){
+           ret = (double) moreCoordinatesList.get(MoreCoordinatesCurrentIndex);
+           MoreCoordinatesCurrentIndex++;
+        }
         else
             return -200;
-        moreCoodinatesList.removeFirst();
+        //moreCoordinatesList.removeFirst();
         return ret;
     }
 }

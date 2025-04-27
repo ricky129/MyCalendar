@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.mycompany.mycalendar;
 
 import com.mycompany.mycalendar.Event.EventController;
@@ -103,7 +99,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                     LocalDateTime selectedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
                     System.out.println("Data clickata: " + selectedDate);
                     //clear the list from the previous cell's event's coordinates
-                    FC1.getMoreCoodinatesList().clear();
+                    FC1.getMoreCoordinatesList().clear();
                     if (!FC1.updateInfoBox(selectedDate, EventName, EventInfo)) {
                         EventName.setText("");
                         EventInfo.setText("No event found!");
