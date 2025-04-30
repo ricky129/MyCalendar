@@ -31,9 +31,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     private final EventController EC1 = new EventController();
     
     MapsController MC1 = new MapsController();
-
-    private double selectedLongitude = 0.0;
-    private double selectedLatitude = 0.0;
     
     /**
      * Creates new form NewJFrame
@@ -45,6 +42,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         addTableClickListener();
         NewEventDescription.setEnabled(false);
         NewEventName.setEnabled(false);
+        PreviousMap.setEnabled(false);
+        NextMap.setEnabled(false);
         initializeMap();
 
         //LISTENER AL TEXT FIELD
@@ -103,8 +102,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                     if (!FC1.updateInfoBox(selectedDate, EventName, EventInfo)) {
                         EventName.setText("");
                         EventInfo.setText("No event found!");
-                    } else
-                        MC1.moveMapNext(webView);
+                        mapPanel.setVisible(false);
+                    } else{
+                        //MC1.moveMapNext(webView);
+                        mapPanel.setVisible(true);
+                        NextMap.setEnabled(true);
+                    }
                 }
             }
         });
@@ -113,8 +116,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     // Implementation of MapCallback interface to receive coordinates from the map
     @Override
     public void setCoordinates(double latitude, double longitude) {
-        this.selectedLatitude = latitude;
-        this.selectedLongitude = longitude;
         System.out.println("Selected coordinates: " + latitude + "," + longitude);
     }
 
@@ -323,11 +324,30 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     }//GEN-LAST:event_NewEventMouseClicked
 
     private void NextMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NextMapMouseClicked
+        if(!NextMap.isEnabled())
+            return;
+        
+        if(!PreviousMap.isEnabled())
+            PreviousMap.setEnabled(true);
+     
         MC1.moveMapNext(webView);
+        
+        if(MC1.getCoordinatesIndex(0)+1 == FC1.getMoreCoordinatesList().size())
+            NextMap.setEnabled(false);
+            
     }//GEN-LAST:event_NextMapMouseClicked
 
     private void PreviousMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PreviousMapMouseClicked
+        if(!PreviousMap.isEnabled())
+            return;
+        
         MC1.moveMapPrevious(webView);
+        
+        if(!NextMap.isEnabled())
+            NextMap.setEnabled(true);
+        
+        if(MC1.getCoordinatesIndex(0)-1 == 0)
+            PreviousMap.setEnabled(false);
     }//GEN-LAST:event_PreviousMapMouseClicked
 
     public String getEventName() {
@@ -337,7 +357,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     public FormController getFC1() {
         return FC1;
     }
-
     /**
      * @param args the command line arguments
      */

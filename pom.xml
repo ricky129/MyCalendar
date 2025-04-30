@@ -9,9 +9,24 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.release>24</maven.compiler.release>
+        <maven.compiler.release>23</maven.compiler.release>
         <exec.mainClass>com.mycompany.mycalendar.MyCalendar</exec.mainClass>
     </properties>
+
+    <build>
+    <plugins>
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.0</version>
+            <configuration>
+                <mainClass>com.mycompany.mycalendar.MyCalendar</mainClass>
+                <executable>${java.home}/bin/java</executable>
+                <classpathScope>runtime</classpathScope>
+            </configuration>
+        </plugin>
+    </plugins>
+    </build>
 
     <dependencies>
         
