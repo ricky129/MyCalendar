@@ -1,17 +1,12 @@
 package com.mycompany.mycalendar.Event;
 
 import com.mycompany.mycalendar.FormController;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Date;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -29,7 +24,7 @@ public class EventController {
     
     // Method to save the event with the selected coordinates to the database
     public void saveEventWithCoordinates(
-            JSpinner NewDate,
+            LocalDateTime dateFromUser,
             EntityManagerFactory emf,
             JTextField NewEventName,
             JTextArea NewEventDescription,
@@ -39,9 +34,9 @@ public class EventController {
             JTable jTable1,
             JComboBox jComboBox2
             ) {
-        Instant instant = ((Date) NewDate.getValue()).toInstant(); // Convert the spinner date to an Instant
+        /*Instant instant = ((Date) dateFromUser.getValue()).toInstant(); // Convert the spinner date to an Instant
         ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
-        LocalDateTime date = zonedDateTime.toLocalDateTime();
+        LocalDateTime date = zonedDateTime.toLocalDateTime();*/
 
         EntityManager em = emf.createEntityManager();
         try {
@@ -50,7 +45,7 @@ public class EventController {
                     0,
                     NewEventName.getText(),
                     NewEventDescription.getText(),
-                    date,
+                    dateFromUser,
                     selectedLatitude,
                     selectedLongitude,
                     null //TODO add reverse logic to get address and/or name

@@ -4,6 +4,7 @@ import com.mycompany.mycalendar.Event.Event;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -25,8 +27,8 @@ public class FormController {
 
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
     private static final FormController instance = new FormController();
-    private int currentYear = Year.now().getValue();
-    private List moreCoordinatesList = new ArrayList<>();
+    private final int currentYear = Year.now().getValue();
+    private final List moreCoordinatesList = new ArrayList<>();
     public int MoreCoordinatesCurrentIndex = 0;
 
     public int getMoreCoordinatesCurrentIndex() {
@@ -55,7 +57,7 @@ public class FormController {
     public List getMoreCoordinatesList() {
         return moreCoordinatesList;
     }
-    
+
     private boolean isLeapYear(int year) {
         return Year.of(year).isLeap();
     }
@@ -95,138 +97,87 @@ public class FormController {
             }
         }
     }
-    
-    public boolean updateInfoBox(LocalDateTime dateFromUser, JTextField EventName, JTextArea EventInfo) {
-        boolean ret = false;
-        String eventInfoTemp;
+
+    public boolean updateInfoBox(LocalDateTime dateFromUser, JTextField eventName, JTextArea eventInfo) {
         EntityManager em = emf.createEntityManager();
 
         try {
             LocalDateTime startOfDay = dateFromUser.truncatedTo(ChronoUnit.DAYS);// e.g., 2025-01-01 00:00:00
             LocalDateTime endOfDay = startOfDay.plusDays(1);
-            
+
             TypedQuery<Event> query = em.createQuery(
-                "SELECT e FROM Event e WHERE e.date >= :start AND e.date < :end",
-                Event.class
+                    "SELECT e FROM Event e WHERE e.date >= :start AND e.date < :end",
+                    Event.class
             );
 
             query.setParameter("start", startOfDay);
             query.setParameter("end", endOfDay);
+
             System.out.println("Querying with dateFromUser: " + dateFromUser);
-            var events = query.getResultList();
+
+            List<Event> events = query.getResultList();
             System.out.println(events.toString());
 
-            if (events == null || events.isEmpty()) {
-                System.out.println("No events found for date " + dateFromUser.toLocalDate());
-                return false;
+            synchronized (moreCoordinatesList) {
+                moreCoordinatesList.clear();
             }
+
+            if (events.isEmpty())
+                return false;
+
+            // Date formatter for consistent output
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMMM d HH:mm");
+
+            // Process events based on eventNameField content
+            String eventNameText = eventName.getText().trim();
+            boolean isFirstEvent = eventNameText.isEmpty();
+            boolean isMoreEvents = eventNameText.equals("More events");
+
+            StringBuilder sb = new StringBuilder();
+            if (!isFirstEvent && !isMoreEvents)
+                // Preserve existing content for default case
+                sb.append(eventNameText).append("\n")
+                        .append(eventInfo.getText()).append("\n");
 
             for (Event event : events) {
                 LocalDateTime date = event.getDate();
-                if (date.toLocalDate().equals(date.toLocalDate())) {
 
-                    switch (EventName.getText()) {
-                        case "" -> {
-                            EventName.setText(event.getName());
+                sb.append("\n")
+                        .append(event.getName())
+                        .append("\n")
+                        .append(date.format(formatter))
+                        .append("\n")
+                        .append(event.getDescription())
+                        .append("\n")
+                        .append("Lat: ").append(event.getLatitude())
+                        .append(", Lon: ").append(event.getLongitude())
+                        .append("\n\n");
 
-                            StringBuilder sb = new StringBuilder();
-                            sb.append(date.getMonth())
-                                    .append(" ")
-                                    .append(date.getDayOfMonth())
-                                    .append(" ")
-                                    .append(date.getHour())
-                                    .append(":")
-                                    .append(date.getMinute())
-                                    .append("\n")
-                                    .append(event.getDescription())
-                                    .append("\n")
-                                    .append("Lat: ").append(event.getLatitude())
-                                    .append(", Lon: ").append(event.getLongitude())
-                                    .append("\n");
-                            
-                            moreCoordinatesList.add((double)event.getLatitude());
-                            moreCoordinatesList.add((double)event.getLongitude());
-                            System.out.println(moreCoordinatesList.toString());
-                            EventInfo.setText(sb.toString());
-                            ret = true;
-                        }
-                        case "More events" -> {
-                            StringBuilder sb = new StringBuilder();
-                            sb.append("\n")
-                                    .append(event.getName())
-                                    .append("\n")
-                                    .append(date.getMonth())
-                                    .append(" ")
-                                    .append(date.getDayOfMonth())
-                                    .append(" ")
-                                    .append(date.getHour())
-                                    .append(":")
-                                    .append(date.getMinute())
-                                    .append("\n")
-                                    .append(event.getDescription())
-                                    .append("\n")
-                                    .append("Lat: ").append(event.getLatitude())
-                                    .append(", Lon: ").append(event.getLongitude())
-                                    .append("\n");
-
-                            moreCoordinatesList.add((double)event.getLatitude());
-                            moreCoordinatesList.add((double)event.getLongitude());
-                            System.out.println(moreCoordinatesList.toString());
-                            EventInfo.append(sb.toString());
-                            ret = true;
-                        }
-                        default -> {
-                            eventInfoTemp = EventInfo.getText();
-
-                            StringBuilder sb = new StringBuilder();
-                            sb.append(EventName.getText())
-                                    .append("\n")
-                                    .append(eventInfoTemp)
-                                    .append("\n")
-                                    .append(event.getName())
-                                    .append("\n")
-                                    .append(date.getMonth())
-                                    .append(" ")
-                                    .append(date.getDayOfMonth())
-                                    .append(" ")
-                                    .append(date.getHour())
-                                    .append(":")
-                                    .append(date.getMinute())
-                                    .append("\n")
-                                    .append(event.getDescription())
-                                    .append("\n")
-                                    .append("Lat: ").append(event.getLatitude())
-                                    .append(", Lon: ").append(event.getLongitude())
-                                    .append("\n");
-
-                            moreCoordinatesList.add((double)event.getLatitude());
-                            moreCoordinatesList.add((double)event.getLongitude());
-                            System.out.println(moreCoordinatesList.toString());
-                            EventInfo.setText(sb.toString());
-                            EventName.setText("More events");
-                            ret = true;
-                        }
-                    }
+                synchronized (moreCoordinatesList) {
+                    moreCoordinatesList.add((double) event.getLatitude());
+                    moreCoordinatesList.add((double) event.getLongitude());
+                    System.out.println(moreCoordinatesList.toString());
                 }
+
+                //Update UI
+                String finalEventNameText = events.size() > 1 ? "More events" : eventNameText;
+                String finalEventInfoText = sb.toString();
+                SwingUtilities.invokeLater(() -> {
+                    eventName.setText(finalEventNameText);
+                    if (isMoreEvents)
+                        eventInfo.append(finalEventNameText);
+                    else
+                        eventInfo.setText(finalEventInfoText);
+                });
             }
+
+            return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error updating info box: " + e.getMessage());
+            SwingUtilities.invokeLater(() -> eventInfo.setText("Error loading events."));
+            return false;
         } finally {
             em.close();
         }
-        return ret;
-    }
-    
-     public double getCoordinatesTEMP(){
-        System.out.println("DEBUG: " + moreCoordinatesList.toString());
-        double ret;
-        if(!moreCoordinatesList.isEmpty()){
-           ret = (double) moreCoordinatesList.get(MoreCoordinatesCurrentIndex);
-               MoreCoordinatesCurrentIndex++;
-        }
-        else
-            return -200;
-        //moreCoordinatesList.removeFirst();
-        return ret;
     }
 }
