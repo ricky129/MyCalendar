@@ -28,8 +28,9 @@ public class FormController {
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
     private static final FormController instance = new FormController();
     private final int currentYear = Year.now().getValue();
-    private final List moreCoordinatesList = new ArrayList<>();
-    public int MoreCoordinatesCurrentIndex = 0;
+    private final List<Double> moreCoordinatesList = new ArrayList<>();
+    private final List<CoordinatesListListener> listeners = new ArrayList<>();
+    private int MoreCoordinatesCurrentIndex = 0;
 
     public int getMoreCoordinatesCurrentIndex() {
         return MoreCoordinatesCurrentIndex;
@@ -37,13 +38,34 @@ public class FormController {
 
     public void setMoreCoordinatesCurrentIndex(int MoreCoordinatesCurrentIndex) {
         this.MoreCoordinatesCurrentIndex = MoreCoordinatesCurrentIndex;
+        notifyListeners();
     }
 
     private FormController() {
     }
-
     public static FormController getInstance() {
         return instance;
+    }
+    
+    public void addCoordinatesListListener(CoordinatesListListener listener) {
+        synchronized (listeners) {
+            listeners.add(listener);
+        }
+    }
+    
+    public void removeCoordinatesListListener(CoordinatesListListener listener) {
+        synchronized (listeners) {
+            listeners.remove(listener);
+        }
+    }
+    
+    private void notifyListeners(){
+        synchronized(listeners) {
+            int size = moreCoordinatesList.size();
+            for (CoordinatesListListener listener : listeners) {
+                listener.onCoordinatesListChanged(size, MoreCoordinatesCurrentIndex);
+            }
+        }
     }
 
     public static EntityManagerFactory getEmf() {
@@ -54,7 +76,7 @@ public class FormController {
         return currentYear;
     }
 
-    public List getMoreCoordinatesList() {
+    public List<Double> getMoreCoordinatesList() {
         return moreCoordinatesList;
     }
 
@@ -120,6 +142,7 @@ public class FormController {
 
             synchronized (moreCoordinatesList) {
                 moreCoordinatesList.clear();
+                notifyListeners();
             }
 
             if (events.isEmpty())
@@ -134,11 +157,11 @@ public class FormController {
             boolean isMoreEvents = eventNameText.equals("More events");
 
             StringBuilder sb = new StringBuilder();
-            if (!isFirstEvent && !isMoreEvents)
+            if (!isFirstEvent && !isMoreEvents){
                 // Preserve existing content for default case
                 sb.append(eventNameText).append("\n")
                         .append(eventInfo.getText()).append("\n");
-
+            }
             for (Event event : events) {
                 LocalDateTime date = event.getDate();
 
@@ -158,6 +181,7 @@ public class FormController {
                     moreCoordinatesList.add((double) event.getLongitude());
                     System.out.println(moreCoordinatesList.toString());
                 }
+            }
 
                 //Update UI
                 String finalEventNameText = events.size() > 1 ? "More events" : eventNameText;
@@ -169,7 +193,6 @@ public class FormController {
                     else
                         eventInfo.setText(finalEventInfoText);
                 });
-            }
 
             return true;
         } catch (Exception e) {
@@ -179,5 +202,4 @@ public class FormController {
         } finally {
             em.close();
         }
-    }
-}
+    }}
