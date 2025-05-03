@@ -1,6 +1,6 @@
 package com.mycompany.mycalendar.Event;
 
-import com.mycompany.mycalendar.FormController;
+import com.mycompany.mycalendar.FrameController;
 import java.time.LocalDateTime;
 import java.time.Month;
 import javax.persistence.EntityManager;
@@ -17,7 +17,7 @@ import javax.swing.JTextField;
  */
 public class EventController {
     
-    FormController FC1 = FormController.getInstance();
+    FrameController FC1 = FrameController.getInstance();
 
     public EventController() {
     }

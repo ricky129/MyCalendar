@@ -23,10 +23,10 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author ricky
  */
-public class FormController {
+public class FrameController {
 
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
-    private static final FormController instance = new FormController();
+    private static final FrameController instance = new FrameController();
     private final int currentYear = Year.now().getValue();
     private final List<Double> moreCoordinatesList = new ArrayList<>();
     private final List<CoordinatesListListener> listeners = new ArrayList<>();
@@ -46,10 +46,10 @@ public class FormController {
         notifyListeners();
     }
 
-    private FormController() {
+    private FrameController() {
     }
 
-    public static FormController getInstance() {
+    public static FrameController getInstance() {
         return instance;
     }
 

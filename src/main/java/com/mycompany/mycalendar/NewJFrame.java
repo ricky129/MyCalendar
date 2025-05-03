@@ -24,7 +24,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
     //EntityManagerFactory as a static field to avoid recreating it repeatedly
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
-    private final FormController FC1 = FormController.getInstance();
+    private final FrameController FC1 = FrameController.getInstance();
     // JFXPanel to embed the JavaFX WebView (OSM map) in Swing
     private JFXPanel fxPanel;
     private WebView webView;
@@ -93,8 +93,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                 int row = target.getSelectedRow();
                 int column = target.getSelectedColumn();
 
-                if (row != -1 && column != -1) { // Check if a cell was actually clicked
-                    Object value = target.getValueAt(row, column);
+                Object value = target.getValueAt(row, column);
+                if (row != -1 && column != -1 && value != null) { // Check if a cell was actually clicked
+                    //Object value = target.getValueAt(row, column);
                     System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
                     int day = (Integer) value;
                     Month selectedMonth = Month.of(jComboBox2.getSelectedIndex() + 1);
@@ -346,7 +347,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         return EventName.getText();
     }
 
-    public FormController getFC1() {
+    public FrameController getFC1() {
         return FC1;
     }
     /**

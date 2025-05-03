@@ -14,7 +14,7 @@ import netscape.javascript.JSObject;
 public class MapsController {
 
     private MapCallback mapCallback;
-    FormController FC1 = FormController.getInstance();
+    FrameController FC1 = FrameController.getInstance();
 
     private double selectedLongitude = 0.0;
     private double selectedLatitude = 0.0;
