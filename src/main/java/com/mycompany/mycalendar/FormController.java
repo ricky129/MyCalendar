@@ -30,9 +30,14 @@ public class FormController {
     private final int currentYear = Year.now().getValue();
     private final List<Double> moreCoordinatesList = new ArrayList<>();
     private final List<CoordinatesListListener> listeners = new ArrayList<>();
-    private int MoreCoordinatesCurrentIndex = 0;
+    private int MoreCoordinatesCurrentIndex = -1;
 
-    public int getMoreCoordinatesCurrentIndex() {
+    public int getMoreCoordinatesCurrentIndex(int modifier) {
+        MoreCoordinatesCurrentIndex += modifier;
+        System.out.println("MoreCoordinatesCurrentIndex: " + MoreCoordinatesCurrentIndex + ", retrieved: " + moreCoordinatesList.get(MoreCoordinatesCurrentIndex));
+        /*(MoreCoordinatesCurrentIndex >= 0 && MoreCoordinatesCurrentIndex < moreCoordinatesList.size() ? 
+             moreCoordinatesList.get(MoreCoordinatesCurrentIndex) : "out of bounds"));*/
+        notifyListeners(); // Notify listeners after index change
         return MoreCoordinatesCurrentIndex;
     }
 
@@ -43,24 +48,25 @@ public class FormController {
 
     private FormController() {
     }
+
     public static FormController getInstance() {
         return instance;
     }
-    
+
     public void addCoordinatesListListener(CoordinatesListListener listener) {
         synchronized (listeners) {
             listeners.add(listener);
         }
     }
-    
+
     public void removeCoordinatesListListener(CoordinatesListListener listener) {
         synchronized (listeners) {
             listeners.remove(listener);
         }
     }
-    
-    private void notifyListeners(){
-        synchronized(listeners) {
+
+    private void notifyListeners() {
+        synchronized (listeners) {
             int size = moreCoordinatesList.size();
             for (CoordinatesListListener listener : listeners) {
                 listener.onCoordinatesListChanged(size, MoreCoordinatesCurrentIndex);
@@ -123,6 +129,11 @@ public class FormController {
     public boolean updateInfoBox(LocalDateTime dateFromUser, JTextField eventName, JTextArea eventInfo) {
         EntityManager em = emf.createEntityManager();
 
+        synchronized (moreCoordinatesList) {
+            moreCoordinatesList.clear();
+        }
+        MoreCoordinatesCurrentIndex = -1;
+
         try {
             LocalDateTime startOfDay = dateFromUser.truncatedTo(ChronoUnit.DAYS);// e.g., 2025-01-01 00:00:00
             LocalDateTime endOfDay = startOfDay.plusDays(1);
@@ -140,11 +151,12 @@ public class FormController {
             List<Event> events = query.getResultList();
             System.out.println(events.toString());
 
+            /*
             synchronized (moreCoordinatesList) {
                 moreCoordinatesList.clear();
+                MoreCoordinatesCurrentIndex = -1;
                 notifyListeners();
-            }
-
+            }*/
             if (events.isEmpty())
                 return false;
 
@@ -157,11 +169,10 @@ public class FormController {
             boolean isMoreEvents = eventNameText.equals("More events");
 
             StringBuilder sb = new StringBuilder();
-            if (!isFirstEvent && !isMoreEvents){
+            if (!isFirstEvent && !isMoreEvents)
                 // Preserve existing content for default case
-                sb.append(eventNameText).append("\n")
-                        .append(eventInfo.getText()).append("\n");
-            }
+                sb.append(eventNameText).append("\n").append(eventInfo.getText()).append("\n");
+
             for (Event event : events) {
                 LocalDateTime date = event.getDate();
 
@@ -183,16 +194,18 @@ public class FormController {
                 }
             }
 
-                //Update UI
-                String finalEventNameText = events.size() > 1 ? "More events" : eventNameText;
-                String finalEventInfoText = sb.toString();
-                SwingUtilities.invokeLater(() -> {
-                    eventName.setText(finalEventNameText);
-                    if (isMoreEvents)
-                        eventInfo.append(finalEventNameText);
-                    else
-                        eventInfo.setText(finalEventInfoText);
-                });
+            notifyListeners();
+
+            //Update UI
+            String finalEventNameText = events.size() > 1 ? "More events" : eventNameText;
+            String finalEventInfoText = sb.toString();
+            SwingUtilities.invokeLater(() -> {
+                eventName.setText(finalEventNameText);
+                if (isMoreEvents)
+                    eventInfo.append(finalEventNameText);
+                else
+                    eventInfo.setText(finalEventInfoText);
+            });
 
             return true;
         } catch (Exception e) {
@@ -202,4 +215,19 @@ public class FormController {
         } finally {
             em.close();
         }
-    }}
+    }
+
+    /**
+     * @return true if calling getMoreCoordinatesCurrentIndex(-2) would still be in‑bounds
+     */
+    public boolean hasPreviousCoordinates() {
+        return MoreCoordinatesCurrentIndex > 1;
+    }
+
+    /**
+     * @return true if calling getMoreCoordinatesCurrentIndex(+2) would still be in‑bounds
+     */
+    public boolean hasNextCoordinates() {
+        return MoreCoordinatesCurrentIndex + 2 < moreCoordinatesList.size();
+    }
+}

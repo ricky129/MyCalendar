@@ -18,27 +18,6 @@ public class MapsController {
 
     private double selectedLongitude = 0.0;
     private double selectedLatitude = 0.0;
-    
-    /*
-    this index iterates through the list of all the coordinates retrieved for all the events on the same day (clicked). it starts at -1 because all the other method calls,
-    except the first one, will need to add 1 to the index, to get the next coordinates. this way the first call gets the 0 cell.
-    */
-    private int coordinatesIndex = -1;
-    
-    /***
-     * Access the clicked day's events' coordinates list.
-     * @param modifier use 1 if you need to get the next coordinates, or subtract as needed to get the previous ones
-     * @return A coordinate according to the modifier you set as a parameter, from the list of all the coordinates retrieved for all the events on the same day (clicked)
-     */
-    public int getCoordinatesIndex(int modifier) {
-        coordinatesIndex= coordinatesIndex+modifier;
-        System.out.println("coordinatesIndex: " + coordinatesIndex + ", retrieved: " + FC1.getMoreCoordinatesList().get(coordinatesIndex));
-        return coordinatesIndex;
-    }
-
-    public void setCoordinatesIndex(int coordinatesIndex) {
-        this.coordinatesIndex = coordinatesIndex;
-    }
 
     public double getSelectedLongitude() {
         return selectedLongitude;
@@ -57,23 +36,25 @@ public class MapsController {
     }
 
     public void moveMapNext(WebView webview) {
-        double lat = (double) FC1.getMoreCoordinatesList().get(getCoordinatesIndex(1));
-        double lon = (double) FC1.getMoreCoordinatesList().get(getCoordinatesIndex(1));
+        double lat = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(1));
+        double lon = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(1));
             if (webview != null) {
                 Platform.runLater(() -> {
-                    webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);");
+                    webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);" +
+                "marker.setLatLng([" + lat + ", " + lon + "]);");
                 });
             } else
                 System.out.println("webview is null");
         }
 
     public void moveMapPrevious(WebView webview) {
-        double lat = (double) FC1.getMoreCoordinatesList().get(getCoordinatesIndex(-3));
-        double lon = (double) FC1.getMoreCoordinatesList().get(getCoordinatesIndex(1));
+        double lat = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(-3));
+        double lon = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(1));
         System.out.println("lat:" + lat + " lon " + lon);
         if (webview != null) {
             Platform.runLater(() -> {
-                webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);");
+                webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);" +
+                "marker.setLatLng([" + lat + ", " + lon + "]);");
             });
         } else
             System.out.println("webview is null");

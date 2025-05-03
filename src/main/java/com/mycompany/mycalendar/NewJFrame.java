@@ -50,7 +50,15 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         NextMap.setEnabled(false);
         initializeMap();
 
-        //LISTENER AL TEXT FIELD
+        //int moreCoordinatesListIndex listener
+        FC1.addCoordinatesListListener((size, currentIndex) -> {
+            SwingUtilities.invokeLater(() -> {
+                NextMap.setEnabled(FC1.hasNextCoordinates());
+                PreviousMap.setEnabled(FC1.hasPreviousCoordinates());
+            });
+        });
+
+        //JTextField NewEventDescription listener
         NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
 
             @Override
@@ -98,14 +106,15 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                         EventName.setText("");
                         EventInfo.setText("No event found!");
                         mapPanel.setVisible(false);
-                    } else if (FC1.getMoreCoordinatesList().size() > 2)
-                        NextMap.setEnabled(true);
-                    mapPanel.setVisible(true);
+                    } else{
+                        MC1.moveMapNext(webView);
+                        mapPanel.setVisible(true);
+                    }
                 }
             }
         });
     }
-
+    
     // Implementation of MapCallback interface to receive coordinates from the map
     @Override
     public void setCoordinates(double latitude, double longitude) {
@@ -307,7 +316,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             NewEventName.setEnabled(true);
             mapPanel.setVisible(true);
         } else if (NewEvent.getText().equals("Add Event")) {
-            EC1.saveEventWithCoordinates(clickedDate, emf, NewEventName, NewEventDescription, MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, jTable1, jComboBox2);
+            EC1.saveEventWithCoordinates(clickedDate, emf, NewEventName, NewEventDescription, 
+                MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, jTable1, jComboBox2);
             NewEvent.setText("New Event");
             if (!FC1.updateInfoBox(clickedDate, EventName, EventInfo)) {
                 EventName.setText("");
@@ -316,36 +326,20 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             } else {
                 MC1.moveMapNext(webView);
                 mapPanel.setVisible(true);
-                NextMap.setEnabled(true);
             }
         }
     }//GEN-LAST:event_NewEventMouseClicked
 
     private void NextMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NextMapMouseClicked
-        if (!NextMap.isEnabled())
-            return;
-
-        if (!PreviousMap.isEnabled())
-            PreviousMap.setEnabled(true);
-
-        MC1.moveMapNext(webView);
-
-        if (MC1.getCoordinatesIndex(0) + 1 == FC1.getMoreCoordinatesList().size())
-            NextMap.setEnabled(false);
-
+        if (NextMap.isEnabled()) {
+            MC1.moveMapNext(webView);
+        }
     }//GEN-LAST:event_NextMapMouseClicked
 
     private void PreviousMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PreviousMapMouseClicked
-        if (!PreviousMap.isEnabled())
-            return;
-
-        MC1.moveMapPrevious(webView);
-
-        if (!NextMap.isEnabled())
-            NextMap.setEnabled(true);
-
-        if (MC1.getCoordinatesIndex(0) - 1 == 0)
-            PreviousMap.setEnabled(false);
+        if (PreviousMap.isEnabled()) {
+            MC1.moveMapPrevious(webView);
+        }
     }//GEN-LAST:event_PreviousMapMouseClicked
 
     public String getEventName() {
