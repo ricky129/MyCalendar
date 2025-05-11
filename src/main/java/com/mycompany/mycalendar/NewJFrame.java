@@ -1,19 +1,25 @@
 package com.mycompany.mycalendar;
 
+import com.mycompany.mycalendar.Event.Event;
 import com.mycompany.mycalendar.Event.EventController;
+import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.util.List;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.web.WebView;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JPanel;
+import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
 /**
@@ -151,14 +157,14 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         jComboBox2 = new javax.swing.JComboBox<>();
         jComboBox1 = new javax.swing.JComboBox<>();
         EventName = new javax.swing.JTextField();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        EventInfo = new javax.swing.JTextArea();
         NewEvent = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         NewEventDescription = new javax.swing.JTextArea();
         mapPanel = new javax.swing.JPanel();
         NextMap = new javax.swing.JButton();
         PreviousMap = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        eventListPanel = new javax.swing.JPanel();
 
         javax.swing.GroupLayout jDialog1Layout = new javax.swing.GroupLayout(jDialog1.getContentPane());
         jDialog1.getContentPane().setLayout(jDialog1Layout);
@@ -212,10 +218,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
         jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2025", "2026" }));
 
-        EventInfo.setColumns(20);
-        EventInfo.setRows(5);
-        jScrollPane2.setViewportView(EventInfo);
-
         NewEvent.setText("New Event");
         NewEvent.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -243,6 +245,10 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             }
         });
 
+        eventListPanel.setAutoscrolls(true);
+        eventListPanel.setLayout(new javax.swing.BoxLayout(eventListPanel, javax.swing.BoxLayout.Y_AXIS));
+        jScrollPane2.setViewportView(eventListPanel);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -267,10 +273,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                             .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(12, 12, 12)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(EventName, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 376, Short.MAX_VALUE))))
+                            .addComponent(EventName, javax.swing.GroupLayout.PREFERRED_SIZE, 117, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 360, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 16, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -283,7 +288,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                         .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(EventName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
@@ -292,8 +297,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                         .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 335, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(33, 33, 33)
+                    .addComponent(jScrollPane2))
+                .addGap(58, 58, 58)
                 .addComponent(mapPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -348,6 +353,27 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             MC1.moveMapPrevious(webView);
     }//GEN-LAST:event_PreviousMapMouseClicked
 
+    private void displayEvents(List<Event> events) {
+        eventListPanel.removeAll();
+        
+        for (Event event : events) {
+            JPanel singleEventPanel = new JPanel();
+            singleEventPanel.setLayout(new BorderLayout());
+            
+            JTextArea eventText = new JTextArea(event.getName() + "\n" + event.getDate() + "\n" + event.getDescription());
+            eventText.setEditable(false);
+            eventText.setLineWrap(true);
+            eventText.setWrapStyleWord(true);
+            
+            JButton deleteBtn = new JButton("Delete");
+            deleteBtn.addActionListener(e -> {
+                //Confirmation dialog
+                int confirm = JOptionPane.showConfirmDialog(this, "Delete this event?", "Confirm", JOptionPane.YES_NO_OPTION);
+                if (confirm)
+            });
+        }
+    }
+    
     public String getEventName() {
         return EventName.getText();
     }
@@ -359,13 +385,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
      * @param args the command line arguments
      */
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JTextArea EventInfo;
     private javax.swing.JTextField EventName;
     private javax.swing.JButton NewEvent;
     private javax.swing.JTextArea NewEventDescription;
     private javax.swing.JTextField NewEventName;
     private javax.swing.JButton NextMap;
     private javax.swing.JButton PreviousMap;
+    private javax.swing.JPanel eventListPanel;
     private javax.swing.JButton jButton1;
     private javax.swing.JComboBox<String> jComboBox1;
     private javax.swing.JComboBox<String> jComboBox2;
