@@ -36,28 +36,43 @@ public class MapsController {
     }
 
     public void moveMapNext(WebView webview) {
-        double lat = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(1));
-        double lon = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(1));
-            if (webview != null) {
+        if (FC1.moveToNextCoordinates()) {
+            double lat = FC1.getCurrentLat();
+            double lon = FC1.getCurrentLon();
+            System.out.println("lat:" + lat + " lon " + lon);
+            if (webview != null)
                 Platform.runLater(() -> {
-                    webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);" +
-                "marker.setLatLng([" + lat + ", " + lon + "]);");
+                    webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);"
+                            + "marker.setLatLng([" + lat + ", " + lon + "]);");
                 });
-            } else
+            else
                 System.out.println("webview is null");
         }
+    }
 
     public void moveMapPrevious(WebView webview) {
-        double lat = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(-3));
-        double lon = (double) FC1.getMoreCoordinatesList().get(FC1.getMoreCoordinatesCurrentIndex(1));
-        System.out.println("lat:" + lat + " lon " + lon);
-        if (webview != null) {
+        if (FC1.moveToPreviousCoordinates()) {
+            double lat = FC1.getCurrentLat();
+            double lon = FC1.getCurrentLon();
+            System.out.println("lat:" + lat + " lon " + lon);
+            if (webview != null)
+                Platform.runLater(() -> {
+                    webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);"
+                            + "marker.setLatLng([" + lat + ", " + lon + "]);");
+                });
+            else
+                System.out.println("webview is null");
+        }
+    }
+
+    public void setMapToCurrentCoordinates(WebView webview) {
+        double lat = FC1.getCurrentLat();
+        double lon = FC1.getCurrentLon();
+        if (webview != null)
             Platform.runLater(() -> {
-                webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);" +
-                "marker.setLatLng([" + lat + ", " + lon + "]);");
+                webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);"
+                        + "marker.setLatLng([" + lat + ", " + lon + "]);");
             });
-        } else
-            System.out.println("webview is null");
     }
 
     // Method to initialize the JavaFX WebView with the OSM map

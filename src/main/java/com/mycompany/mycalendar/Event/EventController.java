@@ -1,8 +1,6 @@
 package com.mycompany.mycalendar.Event;
 
-import com.mycompany.mycalendar.FrameController;
 import java.time.LocalDateTime;
-import java.time.Month;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.swing.JButton;
@@ -16,12 +14,10 @@ import javax.swing.JTextField;
  * @author ricky
  */
 public class EventController {
-    
-    FrameController FC1 = FrameController.getInstance();
 
     public EventController() {
     }
-    
+
     // Method to save the event with the selected coordinates to the database
     public void saveEventWithCoordinates(
             LocalDateTime dateFromUser,
@@ -33,11 +29,8 @@ public class EventController {
             JButton NewEvent,
             JTable jTable1,
             JComboBox jComboBox2
-            ) {
-        /*Instant instant = ((Date) dateFromUser.getValue()).toInstant(); // Convert the spinner date to an Instant
-        ZonedDateTime zonedDateTime = instant.atZone(ZoneId.systemDefault());
-        LocalDateTime date = zonedDateTime.toLocalDateTime();*/
-
+    ) {
+        
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
@@ -57,12 +50,28 @@ public class EventController {
             NewEventName.setText("");
             NewEventDescription.setText("");
             NewEvent.setText("");
-            
-            FC1.updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
+
         } catch (Exception e) {
             em.getTransaction().rollback();
             e.printStackTrace();
             System.out.println("Failed to add event to database");
+        } finally {
+            em.close();
+        }
+    }
+
+    public void deleteEvent(Event event, EntityManagerFactory emf) {
+        EntityManager em = emf.createEntityManager();
+        try {
+            em.getTransaction().begin();
+            Event toDelete = em.find(Event.class, event.getId());
+            if (toDelete != null)
+                em.remove(toDelete);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            if (em.getTransaction().isActive())
+                em.getTransaction().rollback();
+            e.printStackTrace();
         } finally {
             em.close();
         }
