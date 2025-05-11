@@ -22,6 +22,8 @@ import javax.swing.SwingUtilities;
  */
 public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
+    boolean inNewEventCreation = false;
+
     //EntityManagerFactory as a static field to avoid recreating it repeatedly
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
     private final FrameController FC1 = FrameController.getInstance();
@@ -102,24 +104,28 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                     int year = Integer.parseInt(jComboBox1.getSelectedItem().toString());
                     clickedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
                     System.out.println("Data clickata: " + clickedDate);
-                    if (!FC1.updateInfoBox(clickedDate, EventName, EventInfo)) {
-                        System.out.println("No events found for date " + clickedDate.toLocalDate());
-                        EventName.setText("");
-                        EventInfo.setText("No event found!");
-                        mapPanel.setVisible(false);
-                    } else{
-                        MC1.moveMapNext(webView);
-                        mapPanel.setVisible(true);
-                    }
-                }
+                    if (!inNewEventCreation)
+                        if (!FC1.updateInfoBox(clickedDate, EventName, EventInfo)) {
+                            System.out.println("No events found for date " + clickedDate.toLocalDate());
+                            EventName.setText("");
+                            EventInfo.setText("No event found!");
+                            mapPanel.setVisible(false);
+                        } else {
+                            MC1.moveMapNext(webView);
+                            mapPanel.setVisible(true);
+                        }
+                } else
+                    mapPanel.setVisible(false);
             }
         });
     }
-    
+
     // Implementation of MapCallback interface to receive coordinates from the map
     @Override
     public void setCoordinates(double latitude, double longitude) {
         System.out.println("Selected coordinates: " + latitude + "," + longitude);
+        MC1.setSelectedLongitude(longitude);
+        MC1.setSelectedLatitude(latitude);
     }
 
     // Method to initialize the JavaFX WebView with the OSM map
@@ -312,13 +318,14 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     }//GEN-LAST:event_jComboBox2ActionPerformed
 
     private void NewEventMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NewEventMouseClicked
-        if (NewEvent.getText().equals("New Event")) {
+        inNewEventCreation = true;
+        if (!NewEvent.getText().equals("Add Event")) {
             NewEventDescription.setEnabled(true);
             NewEventName.setEnabled(true);
             mapPanel.setVisible(true);
-        } else if (NewEvent.getText().equals("Add Event")) {
-            EC1.saveEventWithCoordinates(clickedDate, emf, NewEventName, NewEventDescription, 
-                MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, jTable1, jComboBox2);
+        } else {
+            EC1.saveEventWithCoordinates(clickedDate, emf, NewEventName, NewEventDescription,
+                    MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, jTable1, jComboBox2);
             NewEvent.setText("New Event");
             if (!FC1.updateInfoBox(clickedDate, EventName, EventInfo)) {
                 EventName.setText("");
@@ -332,15 +339,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
     }//GEN-LAST:event_NewEventMouseClicked
 
     private void NextMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NextMapMouseClicked
-        if (NextMap.isEnabled()) {
+        if (NextMap.isEnabled())
             MC1.moveMapNext(webView);
-        }
     }//GEN-LAST:event_NextMapMouseClicked
 
     private void PreviousMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PreviousMapMouseClicked
-        if (PreviousMap.isEnabled()) {
+        if (PreviousMap.isEnabled())
             MC1.moveMapPrevious(webView);
-        }
     }//GEN-LAST:event_PreviousMapMouseClicked
 
     public String getEventName() {
