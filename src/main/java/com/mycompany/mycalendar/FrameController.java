@@ -150,7 +150,13 @@ public class FrameController {
 
             List<Event> events = query.getResultList();
             System.out.println(events.toString());
-            
+
+            /*
+            synchronized (moreCoordinatesList) {
+                moreCoordinatesList.clear();
+                MoreCoordinatesCurrentIndex = -1;
+                notifyListeners();
+            }*/
             if (events.isEmpty())
                 return false;
 
