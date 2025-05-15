@@ -29,9 +29,11 @@ public class MyCalendar {
             java.util.logging.Logger.getLogger(NewJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
 
-        // Create and display the form
-        java.awt.EventQueue.invokeLater(() -> new NewJFrame().setVisible(true));
-
+        // Use the Singleton instance instead of creating a new one
+        java.awt.EventQueue.invokeLater(() -> {
+            NewJFrame.getInstance().setVisible(true);
+        });
+        
         // Shutdown hook to close EMF
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (emf != null && emf.isOpen()) {

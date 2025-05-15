@@ -1,5 +1,8 @@
 package com.mycompany.mycalendar;
 
+import com.mycompany.mycalendar.Map.MapCallback;
+import com.mycompany.mycalendar.Map.MapLoadListener;
+import com.mycompany.mycalendar.Map.MapsController;
 import com.mycompany.mycalendar.Event.Event;
 import com.mycompany.mycalendar.Event.EventController;
 import java.awt.BorderLayout;
@@ -19,7 +22,6 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
@@ -32,32 +34,37 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author ricky
  */
-public class NewJFrame extends javax.swing.JFrame implements MapCallback {
+public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoadListener {
 
-    private static boolean alreadyBuilt = false;
     boolean inNewEventCreation = false;
+    private static boolean alreadyBuilt = false;
 
     //EntityManagerFactory as a static field to avoid recreating it repeatedly
     private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
     private final FrameController FC1 = FrameController.getInstance();
+
     // JFXPanel to embed the JavaFX WebView (OSM map) in Swing
     private JFXPanel fxPanel;
     private WebView webView;
     private LocalDateTime clickedDate;
 
     private final EventController EC1 = new EventController();
-
     MapsController MC1 = new MapsController();
+    private static final NewJFrame instance = new NewJFrame();
 
-    public void updateCalendar(JTable JTB1, JComboBox JCB1, Month month) {
+    public static NewJFrame getInstance() {
+        return instance;
+    }
+
+    public void updateCalendar() {
         // Clear the table
-        for (int row = 0; row < JTB1.getRowCount(); row++) {
+        for (int row = 0; row < CalendarJTable.getRowCount(); row++) {
             for (int col = 0; col < 7; col++) {
-                ((DefaultTableModel) JTB1.getModel()).setValueAt(null, row, col);
+                ((DefaultTableModel) CalendarJTable.getModel()).setValueAt(null, row, col);
             }
         }
 
-        Month selectedMonth = Month.of(JCB1.getSelectedIndex() + 1);
+        Month selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
         int daysInMonth = FC1.getNumberOfDays(selectedMonth);
 
         // Calculate starting day of the week (Monday = 0)
@@ -70,7 +77,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
         while (day <= daysInMonth) {
             if (col >= 0 && col < 7) {
-                ((DefaultTableModel) JTB1.getModel()).setValueAt(day, row, col);
+                ((DefaultTableModel) CalendarJTable.getModel()).setValueAt(day, row, col);
                 day++;
             }
             col++;
@@ -81,21 +88,22 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         }
     }
 
-    public NewJFrame() {
+    private NewJFrame() {
         if (!alreadyBuilt) {
             this.mapPanel = new JPanel(new java.awt.BorderLayout());
             initComponents();
             SwingUtilities.invokeLater(()
-                    -> updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1))
+                    -> updateCalendar()
             );
             addTableClickListener();
             NewEventDescription.setEnabled(false);
             NewEventName.setEnabled(false);
             PreviousMap.setEnabled(false);
             NextMap.setEnabled(false);
+
+            MC1.addMapLoadListener(this);
             initializeMap();
 
-            //int moreCoordinatesListIndex listener
             FC1.addCoordinatesListListener((size, currentIndex) -> {
                 SwingUtilities.invokeLater(() -> {
                     NextMap.setEnabled(FC1.hasNextCoordinates());
@@ -121,48 +129,48 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                     NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
                 }
             });
+            alreadyBuilt = true;
         }
-        alreadyBuilt = true;
     }
 
     private void addTableClickListener() {
-        jTable1.addMouseListener(new MouseAdapter() {   //extends MouseAdapter
+        CalendarJTable.addMouseListener(new MouseAdapter() {   //extends MouseAdapter
             @Override
             public void mouseClicked(MouseEvent e) {
-                /*This gets the JTable object that was clicked.  
-                e.getSource() returns the component that triggered 
-                the event, which is the jTable1 in this case.
-                 */
-                JTable target = (JTable) e.getSource();
-                
-                int row = target.getSelectedRow();
-                int column = target.getSelectedColumn();
+                if (CalendarJTable.isEnabled()) {
+                    /**
+                     * This gets the JTable object that was clicked. e.getSource() returns the component that triggered the event, which is the jTable1 in this case.
+                     */
+                    JTable target = (JTable) e.getSource();
 
-                Object value = target.getValueAt(row, column);
-                if (row != -1 && column != -1 && value != null) { // Check if a cell was actually clicked
-                    System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
-                    int day = (Integer) value;
-                    Month selectedMonth = Month.of(jComboBox2.getSelectedIndex() + 1);
-                    int year = Integer.parseInt(jComboBox1.getSelectedItem().toString());
-                    clickedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
-                    System.out.println("Data clickata: " + clickedDate);
-                    if (!inNewEventCreation) {
-                        List<Event> events = FC1.getEventsForDate(clickedDate);
-                        if (events.isEmpty()) {
-                            System.out.println("No events found for date " + clickedDate.toLocalDate());
-                            jPanel1.removeAll();
-                            jPanel1.revalidate();
-                            jPanel1.repaint();
-                            mapPanel.setVisible(false);
-                        } else {
+                    int row = target.getSelectedRow();
+                    int column = target.getSelectedColumn();
+
+                    Object value = target.getValueAt(row, column);
+                    if (row != -1 && column != -1 && value != null) {
+                        System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
+                        int day = (Integer) value;
+                        Month selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
+                        int year = Integer.parseInt(YearSelectorJCombobox.getSelectedItem().toString());
+                        clickedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
+                        System.out.println("Data clickata: " + clickedDate);
+                        if (!inNewEventCreation) {
+                            List<Event> events = FC1.getEventsForDate(clickedDate);
                             updateEventsPanel(events);
-                            MC1.setMapToCurrentCoordinates(webView);
-                            //MC1.moveMapNext(webView);
-                            mapPanel.setVisible(true);
+                            if (events.isEmpty()) {
+                                System.out.println("No events found for date " + clickedDate.toLocalDate());
+                                jPanel1.removeAll();
+                                jPanel1.revalidate();
+                                jPanel1.repaint();
+                                mapPanel.setVisible(false);
+                            } else {
+                                MC1.setMapToCurrentCoordinates(webView);
+                                mapPanel.setVisible(true);
+                            }
                         }
-                    }
-                } else
-                    mapPanel.setVisible(false);
+                    } else
+                        mapPanel.setVisible(false);
+                }
             }
         });
     }
@@ -194,9 +202,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         jButton1 = new javax.swing.JButton();
         NewEventName = new javax.swing.JTextField();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
-        jComboBox2 = new javax.swing.JComboBox<>();
-        jComboBox1 = new javax.swing.JComboBox<>();
+        CalendarJTable = new javax.swing.JTable();
+        MonthSelectorJComboBox = new javax.swing.JComboBox<>();
+        YearSelectorJCombobox = new javax.swing.JComboBox<>();
         NewEvent = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         NewEventDescription = new javax.swing.JTextArea();
@@ -205,6 +213,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         PreviousMap = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         jPanel1 = new javax.swing.JPanel();
+        EscBtn = new javax.swing.JButton();
 
         javax.swing.GroupLayout jDialog1Layout = new javax.swing.GroupLayout(jDialog1.getContentPane());
         jDialog1.getContentPane().setLayout(jDialog1Layout);
@@ -232,7 +241,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             }
         });
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        CalendarJTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null},
                 {null, null, null, null, null, null, null},
@@ -244,19 +253,20 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                 "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
             }
         ));
-        jTable1.setCellSelectionEnabled(true);
-        jTable1.setShowGrid(true);
-        jScrollPane1.setViewportView(jTable1);
+        CalendarJTable.setCellSelectionEnabled(true);
+        CalendarJTable.setShowGrid(true);
+        jScrollPane1.setViewportView(CalendarJTable);
+        CalendarJTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 
-        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" }));
-        jComboBox2.setToolTipText("");
-        jComboBox2.addActionListener(new java.awt.event.ActionListener() {
+        MonthSelectorJComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" }));
+        MonthSelectorJComboBox.setToolTipText("");
+        MonthSelectorJComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jComboBox2ActionPerformed(evt);
+                MonthSelectorJComboBoxActionPerformed(evt);
             }
         });
 
-        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2025", "2026" }));
+        YearSelectorJCombobox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2025", "2026" }));
 
         NewEvent.setText("New Event");
         NewEvent.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -288,6 +298,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         jPanel1.setLayout(new javax.swing.BoxLayout(jPanel1, javax.swing.BoxLayout.Y_AXIS));
         jScrollPane4.setViewportView(jPanel1);
 
+        EscBtn.setText("ESC");
+        EscBtn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                EscBtnMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -303,13 +320,16 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                                 .addComponent(NextMap, javax.swing.GroupLayout.PREFERRED_SIZE, 429, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(mapPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(NewEvent)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(EscBtn))
                             .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(MonthSelectorJComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(NewEvent)
+                                .addComponent(YearSelectorJCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(12, 12, 12)
@@ -323,12 +343,14 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jComboBox2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(MonthSelectorJComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(YearSelectorJCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(NewEvent)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(EscBtn)
+                            .addComponent(NewEvent))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -354,9 +376,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
     }//GEN-LAST:event_NewEventNameKeyTyped
 
-    private void jComboBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox2ActionPerformed
-        updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
-    }//GEN-LAST:event_jComboBox2ActionPerformed
+    private void MonthSelectorJComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MonthSelectorJComboBoxActionPerformed
+        updateCalendar();
+    }//GEN-LAST:event_MonthSelectorJComboBoxActionPerformed
 
     private void NewEventMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NewEventMouseClicked
         inNewEventCreation = true;
@@ -366,17 +388,17 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
             mapPanel.setVisible(true);
         } else {
             EC1.saveEventWithCoordinates(clickedDate, emf, NewEventName, NewEventDescription,
-                    MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, jTable1, jComboBox2);
+                    MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, CalendarJTable, MonthSelectorJComboBox);
             NewEvent.setText("New Event");
-            updateCalendar(jTable1, jComboBox2, Month.of(jComboBox2.getSelectedIndex() + 1));
+            updateCalendar();
             List<Event> events = FC1.getEventsForDate(clickedDate);
             updateEventsPanel(events);
             if (!events.isEmpty()) {
                 MC1.setMapToCurrentCoordinates(webView);
-                mapPanel.setVisible(false);
-            } else
-                //MC1.moveMapNext(webView);
                 mapPanel.setVisible(true);
+            } else
+                mapPanel.setVisible(false);
+            inNewEventCreation = false;
         }
     }//GEN-LAST:event_NewEventMouseClicked
 
@@ -389,6 +411,21 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
         if (PreviousMap.isEnabled())
             MC1.moveMapPrevious(webView);
     }//GEN-LAST:event_PreviousMapMouseClicked
+
+    public void resetMap() {
+        MC1.setSelectedLongitude(0.0);
+        MC1.setSelectedLatitude(0.0);
+        PreviousMap.setEnabled(false);
+        NextMap.setEnabled(false);
+        FC1.getCoordinatesList().clear();
+        FC1.resetCoordinates();
+    }
+
+    private void EscBtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EscBtnMouseClicked
+        updateEventsPanel(null);
+        resetMap();
+        mapPanel.setVisible(false);
+    }//GEN-LAST:event_EscBtnMouseClicked
 
     private JPanel createEventPanel(Event event) {
         JPanel panel = new JPanel(new BorderLayout());
@@ -423,33 +460,49 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback {
 
     private void updateEventsPanel(List<Event> events) {
         jPanel1.removeAll();
-        for (Event event : events) {
-            JPanel eventPanel = createEventPanel(event);
-            jPanel1.add(eventPanel);
-        }
+        if (events != null)
+            for (Event event : events) {
+                JPanel eventPanel = createEventPanel(event);
+                jPanel1.add(eventPanel);
+            }
         jPanel1.revalidate();
         jPanel1.repaint();
+
     }
 
     public FrameController getFC1() {
         return FC1;
     }
-    
+
+    public void enableCalendar() {
+        SwingUtilities.invokeLater(() -> {
+            CalendarJTable.setEnabled(true);
+            CalendarJTable.setVisible(true);
+            System.out.println("Calendar enabled: " + CalendarJTable.isEnabled());
+        });
+    }
+
+    @Override
+    public void onMapLoaded() {
+        System.out.println("Map loaded, processing queued actions");
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JTable CalendarJTable;
+    private javax.swing.JButton EscBtn;
+    private javax.swing.JComboBox<String> MonthSelectorJComboBox;
     private javax.swing.JButton NewEvent;
     private javax.swing.JTextArea NewEventDescription;
     private javax.swing.JTextField NewEventName;
     private javax.swing.JButton NextMap;
     private javax.swing.JButton PreviousMap;
+    private javax.swing.JComboBox<String> YearSelectorJCombobox;
     private javax.swing.JButton jButton1;
-    private javax.swing.JComboBox<String> jComboBox1;
-    private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JDialog jDialog1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
-    private javax.swing.JTable jTable1;
     private javax.swing.JPanel mapPanel;
     // End of variables declaration//GEN-END:variables
 }

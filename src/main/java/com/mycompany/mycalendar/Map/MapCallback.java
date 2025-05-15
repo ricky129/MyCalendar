@@ -1,4 +1,4 @@
-package com.mycompany.mycalendar;
+package com.mycompany.mycalendar.Map;
 
 /**
  *

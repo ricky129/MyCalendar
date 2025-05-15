@@ -22,7 +22,7 @@ public class FrameController {
     private static final FrameController instance = new FrameController();
     private final int currentYear = Year.now().getValue();
     private final List<Double> CoordinatesList = new ArrayList<>();
-    private final List<CoordinatesListListener> listeners = new ArrayList<>();
+    private final List<CoordinatesListListener> indexListeners = new ArrayList<>();
     private int CoordinatesCurrentIndex = -1;
 
     public boolean moveToNextCoordinates() {
@@ -71,21 +71,21 @@ public class FrameController {
     }
 
     public void addCoordinatesListListener(CoordinatesListListener listener) {
-        synchronized (listeners) {
-            listeners.add(listener);
+        synchronized (indexListeners) {
+            indexListeners.add(listener);
         }
     }
 
     public void removeCoordinatesListListener(CoordinatesListListener listener) {
-        synchronized (listeners) {
-            listeners.remove(listener);
+        synchronized (indexListeners) {
+            indexListeners.remove(listener);
         }
     }
 
     private void notifyListeners() {
-        synchronized (listeners) {
+        synchronized (indexListeners) {
             int size = CoordinatesList.size();
-            for (CoordinatesListListener listener : listeners) {
+            for (CoordinatesListListener listener : indexListeners) {
                 listener.onCoordinatesListChanged(size, CoordinatesCurrentIndex);
             }
         }
@@ -114,7 +114,7 @@ public class FrameController {
     //public boolean updateInfoBox(LocalDateTime dateFromUser, JTextField eventName, JTextArea eventInfo) {
     public List<Event> getEventsForDate(LocalDateTime dateFromUser) {
         EntityManager em = emf.createEntityManager();
-        
+
         try {
             LocalDateTime startOfDay = dateFromUser.truncatedTo(ChronoUnit.DAYS);// e.g., 2025-01-01 00:00:00
             LocalDateTime endOfDay = startOfDay.plusDays(1);
@@ -147,5 +147,13 @@ public class FrameController {
         } finally {
             em.close();
         }
+    }
+
+    public void resetCoordinates() {
+        synchronized (CoordinatesList) {
+            CoordinatesList.clear();
+        }
+        CoordinatesCurrentIndex = -1;
+        notifyListeners();
     }
 }
