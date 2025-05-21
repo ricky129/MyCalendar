@@ -1,16 +1,18 @@
 package com.mycompany.mycalendar.Map;
 
 import com.mycompany.mycalendar.FrameController;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import javax.swing.JPanel;
-import netscape.javascript.JSObject;
 
 /**
  *
@@ -18,7 +20,6 @@ import netscape.javascript.JSObject;
  */
 public class MapsController {
 
-    private MapCallback mapCallback;
     FrameController FC1 = FrameController.getInstance();
     boolean isMapLoaded = false;
     private final List<MapLoadListener> mapLoadListeners = new ArrayList<>();
@@ -26,6 +27,9 @@ public class MapsController {
 
     private double selectedLongitude = 0.0;
     private double selectedLatitude = 0.0;
+    
+    String USER_AGENT = "MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)";
+    String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
 
     private void queueMapAction(Runnable action) {
         if (isMapLoaded)
@@ -90,10 +94,9 @@ public class MapsController {
 
     // Method to initialize the JavaFX WebView with the OSM map
     public void initializeMap(WebView webView, JFXPanel fxPanel, JPanel mapPanel, MapCallback callback) {
-        this.mapCallback = callback;
 
         Platform.runLater(() -> {
-            webView.getEngine().setUserAgent("MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)");
+            webView.getEngine().setUserAgent(USER_AGENT);
 
             //enable JavaScritp console logging for debugging
             webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
@@ -111,11 +114,28 @@ public class MapsController {
                 });
                 webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, newState) -> {
                     if (newState == Worker.State.SUCCEEDED) {
-                        JSObject window = (JSObject) webView.getEngine().executeScript("window");
-                        window.setMember("javaCallback", this.mapCallback);
+                        try {
+                        // Expose the callback to JavaScript
+                        webView.getEngine().executeScript(
+                            "window.javaCallback = { " +
+                            "  invoke: function(data) { " +
+                            "    return javaCallback.invoke(data); " +
+                            "  }" +
+                            "};"
+                        );
+                        // Bind the Java callback to the JavaScript object
+                        webView.getEngine().executeScript(
+                            "window.javaCallback.invoke = function(data) {" +
+                            "  return " + callback.getClass().getName() + ".invoke(data);" +
+                            "};"
+                        );
+                        // Invalidate map size if map object exists
                         webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
                         System.out.println("Map loaded successfully in WebView");
                         setMapLoaded(true);
+                        } catch (Exception e) {
+                            System.err.println("Erorr executing JavaScript: " + e.getMessage());
+                        }
                     } else if (newState == Worker.State.FAILED) {
                         System.err.println("Map failed to load");
                         setMapLoaded(true);
@@ -164,6 +184,28 @@ public class MapsController {
             for (MapLoadListener listener : mapLoadListeners) {
                 listener.onMapLoaded();
             }
+        }
+    }
+    
+    public String getAddressFromCoordinates(){
+        try {
+            String ret = "";
+            URL url = new URL(
+                    NOMINATIM_REVERSE_API_URL +
+                    "format=json" +
+                    "&lat=" + selectedLatitude +
+                    "&lon=" + selectedLongitude +
+                    "&zoom=18" +
+                    "&addressdetails=1"
+            );
+            
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            
+            connection.setRequestProperty("User-Agent", USER_AGENT);
+            
+            return ret;
+        } catch (Exception ex) {
+            Logger.getLogger(MapsController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
