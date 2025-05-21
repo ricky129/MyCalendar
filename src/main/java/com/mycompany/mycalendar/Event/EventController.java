@@ -1,5 +1,7 @@
 package com.mycompany.mycalendar.Event;
 
+import com.mycompany.mycalendar.JSONResponse;
+import com.mycompany.mycalendar.Map.MapsController;
 import java.time.LocalDateTime;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -14,12 +16,11 @@ import javax.swing.JTextField;
  * @author ricky
  */
 public class EventController {
-
-    public EventController() {
-    }
+    MapsController MC1 = new MapsController();
+    JSONResponse response;
 
     // Method to save the event with the selected coordinates to the database
-    public void saveEventWithCoordinates(
+    public void saveEvent(
             LocalDateTime dateFromUser,
             EntityManagerFactory emf,
             JTextField NewEventName,
@@ -27,13 +28,16 @@ public class EventController {
             double selectedLatitude,
             double selectedLongitude,
             JButton NewEvent,
-            JTable jTable1,
-            JComboBox jComboBox2
+            JTable CalendarJTable,
+            JComboBox MonthSelectorComboBox
     ) {
+        
+        response = MC1.getAddressFromCoordinates();
         
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
+            
             Event newEvent = new Event(
                     0,
                     NewEventName.getText(),
@@ -41,7 +45,7 @@ public class EventController {
                     dateFromUser,
                     selectedLatitude,
                     selectedLongitude,
-                    null //TODO add reverse logic to get address and/or name
+                    response.getDisplayName()
             );
             em.persist(newEvent); //persist the event to the database
             em.getTransaction().commit();

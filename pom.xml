@@ -14,21 +14,27 @@
     </properties>
 
     <build>
-    <plugins>
-        <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>3.1.0</version>
-            <configuration>
-                <mainClass>com.mycompany.mycalendar.MyCalendar</mainClass>
-                <executable>${java.home}/bin/java</executable>
-                <classpathScope>runtime</classpathScope>
-            </configuration>
-        </plugin>
-    </plugins>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <configuration>
+                    <mainClass>com.mycompany.mycalendar.MyCalendar</mainClass>
+                    <executable>${java.home}/bin/java</executable>
+                    <classpathScope>runtime</classpathScope>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
     <dependencies>
+        
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.11.0</version> 
+        </dependency>
         
         <dependency>
             <groupId>org.swinglabs</groupId>
@@ -72,7 +78,12 @@
             <version>23</version>
             <type>jar</type>
         </dependency>
-            
+        <dependency>
+            <groupId>org.netbeans.external</groupId>
+            <artifactId>com-google-gson</artifactId>
+            <version>RELEASE112</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
     
 </project>

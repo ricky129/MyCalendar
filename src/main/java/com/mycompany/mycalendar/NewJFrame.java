@@ -387,7 +387,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             NewEventName.setEnabled(true);
             mapPanel.setVisible(true);
         } else {
-            EC1.saveEventWithCoordinates(clickedDate, emf, NewEventName, NewEventDescription,
+            EC1.saveEvent(clickedDate, emf, NewEventName, NewEventDescription,
                     MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, CalendarJTable, MonthSelectorJComboBox);
             NewEvent.setText("New Event");
             updateCalendar();
@@ -432,7 +432,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         String html = "<html><b>Name:</b> " + event.getName() + "<br>"
                 + "<b>Date:</b> " + event.getDate().format(DateTimeFormatter.ofPattern("MMMM d HH:mm")) + "<br>"
                 + "<b>Description:</b> " + event.getDescription() + "<br>"
-                + "<b>Location:</b> Lat: " + event.getLatitude() + ", Lon: " + event.getLongitude() + "</html>";
+                + "<b>Coordinates:</b> Lat: " + event.getLatitude() + ", Lon: " + event.getLongitude() + "<br>"
+                + "<b>Location:</b> " + event.getLocation() + "</html>";
+        
         JLabel label = new JLabel(html);
         label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));  //padding added for readability
 

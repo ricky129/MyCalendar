@@ -1,6 +1,10 @@
 package com.mycompany.mycalendar.Map;
 
+import com.google.gson.Gson;
 import com.mycompany.mycalendar.FrameController;
+import com.mycompany.mycalendar.JSONResponse;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -13,6 +17,7 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import javax.swing.JPanel;
+import netscape.javascript.JSObject;
 
 /**
  *
@@ -30,6 +35,8 @@ public class MapsController {
     
     String USER_AGENT = "MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)";
     String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
+    
+    private final Gson gson = new Gson();
 
     private void queueMapAction(Runnable action) {
         if (isMapLoaded)
@@ -100,6 +107,10 @@ public class MapsController {
 
             //enable JavaScritp console logging for debugging
             webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
+            
+            //enable JavaScritp console logging for debugging
+            webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
+
 
             URL resourceUrl = getClass().getResource("/html/map.html");
             if (resourceUrl == null) {
@@ -116,6 +127,9 @@ public class MapsController {
                     if (newState == Worker.State.SUCCEEDED) {
                         try {
                         // Expose the callback to JavaScript
+                            JSObject window = (JSObject) webView.getEngine().executeScript("window");
+                            window.setMember(("javaCallback"), callback);
+                            /*
                         webView.getEngine().executeScript(
                             "window.javaCallback = { " +
                             "  invoke: function(data) { " +
@@ -123,12 +137,14 @@ public class MapsController {
                             "  }" +
                             "};"
                         );
+                            
                         // Bind the Java callback to the JavaScript object
                         webView.getEngine().executeScript(
                             "window.javaCallback.invoke = function(data) {" +
                             "  return " + callback.getClass().getName() + ".invoke(data);" +
                             "};"
                         );
+                            */
                         // Invalidate map size if map object exists
                         webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
                         System.out.println("Map loaded successfully in WebView");
@@ -187,9 +203,15 @@ public class MapsController {
         }
     }
     
-    public String getAddressFromCoordinates(){
+    public JSONResponse getAddressFromCoordinates(){
+        
         try {
-            String ret = "";
+            // Construct the Nominatim API URL
+            // format=json: Request JSON response
+            // lat: Latitude
+            // lon: Longitude
+            // zoom=18: Provides a detailed address (street number, street name, etc.)
+            // addressdetails=1: Includes individual address components in the response
             URL url = new URL(
                     NOMINATIM_REVERSE_API_URL +
                     "format=json" +
@@ -201,12 +223,31 @@ public class MapsController {
             
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             
+            // Set the User-Agent header (MANDATORY for Nominatim)
             connection.setRequestProperty("User-Agent", USER_AGENT);
             
-            return ret;
+            connection.setRequestMethod("GET");
+            int responseCode = connection.getResponseCode();
+            
+            if(responseCode == HttpURLConnection.HTTP_OK){
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+                StringBuilder response = new StringBuilder();
+                
+                while((inputLine = in.readLine()) != null)
+                    response.append(inputLine);
+                in.close();
+                
+                 // Deserialize the JSON response directly into your Java object
+                JSONResponse geocodeResponse = gson.fromJson(response.toString(), JSONResponse.class);
+                
+                return geocodeResponse;
+            }
+            
         } catch (Exception ex) {
             Logger.getLogger(MapsController.class.getName()).log(Level.SEVERE, null, ex);
         }
+        return null;
     }
 
     public double getSelectedLongitude() {
