@@ -7,8 +7,9 @@ import com.mycompany.mycalendar.Event.Event;
 import com.mycompany.mycalendar.Event.EventController;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDateTime;
@@ -20,13 +21,19 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.web.WebView;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
@@ -54,6 +61,55 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
     public static NewJFrame getInstance() {
         return instance;
+    }
+
+    private NewJFrame() {
+        if (!alreadyBuilt) {
+            this.mapPanel = new JPanel(new java.awt.BorderLayout());
+            initComponents();
+            
+            setupEscapeKeyBinding();
+            
+            SwingUtilities.invokeLater(()
+                    -> updateCalendar()
+            );
+            addTableClickListener();
+
+            mapPanel.setVisible(false);
+
+            //set components to their initial state
+            componentsSetEnabled(false);
+
+            MC1.addMapLoadListener(this);
+            initializeMap();
+
+            FC1.addCoordinatesListListener((size, currentIndex) -> {
+                SwingUtilities.invokeLater(() -> {
+                    NextMap.setEnabled(FC1.hasNextCoordinates());
+                    PreviousMap.setEnabled(FC1.hasPreviousCoordinates());
+                });
+            });
+
+            //JTextField NewEventDescription listener
+            NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
+
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    NewEvent.setText("Add Event");
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
+                }
+            });
+            alreadyBuilt = true;
+        }
     }
 
     public void updateCalendar() {
@@ -88,51 +144,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         }
     }
 
-    private NewJFrame() {
-        if (!alreadyBuilt) {
-            this.mapPanel = new JPanel(new java.awt.BorderLayout());
-            initComponents();
-            SwingUtilities.invokeLater(()
-                    -> updateCalendar()
-            );
-            addTableClickListener();
-            NewEventDescription.setEnabled(false);
-            NewEventName.setEnabled(false);
-            PreviousMap.setEnabled(false);
-            NextMap.setEnabled(false);
-
-            MC1.addMapLoadListener(this);
-            initializeMap();
-
-            FC1.addCoordinatesListListener((size, currentIndex) -> {
-                SwingUtilities.invokeLater(() -> {
-                    NextMap.setEnabled(FC1.hasNextCoordinates());
-                    PreviousMap.setEnabled(FC1.hasPreviousCoordinates());
-                });
-            });
-
-            //JTextField NewEventDescription listener
-            NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
-
-                @Override
-                public void insertUpdate(DocumentEvent e) {
-                    NewEvent.setText("Add Event");
-                }
-
-                @Override
-                public void removeUpdate(DocumentEvent e) {
-                    NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
-                }
-
-                @Override
-                public void changedUpdate(DocumentEvent e) {
-                    NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
-                }
-            });
-            alreadyBuilt = true;
-        }
-    }
-
     private void addTableClickListener() {
         CalendarJTable.addMouseListener(new MouseAdapter() {   //extends MouseAdapter
             @Override
@@ -153,7 +164,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                         Month selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
                         int year = Integer.parseInt(YearSelectorJCombobox.getSelectedItem().toString());
                         clickedDate = LocalDateTime.of(year, selectedMonth, day, 00, 00, 00);
-                        if(inNewEventCreation)
+                        if (inNewEventCreation)
                             ShowSelectedDate.setText(clickedDate.toString());
                         System.out.println("Data clickata: " + clickedDate);
                         if (!inNewEventCreation) {
@@ -219,6 +230,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         EscBtn = new javax.swing.JButton();
         ShowSelectedDate = new javax.swing.JTextField();
         ShowSelectedLocation = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
 
         javax.swing.GroupLayout jDialog1Layout = new javax.swing.GroupLayout(jDialog1.getContentPane());
         jDialog1.getContentPane().setLayout(jDialog1Layout);
@@ -309,23 +322,38 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 EscBtnMouseClicked(evt);
             }
         });
+        EscBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                EscBtnActionPerformed(evt);
+            }
+        });
+        EscBtn.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                EscBtnKeyPressed(evt);
+            }
+        });
+
+        ShowSelectedDate.setEditable(false);
+        ShowSelectedDate.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ShowSelectedDateActionPerformed(evt);
+            }
+        });
+
+        ShowSelectedLocation.setEditable(false);
+
+        jLabel1.setText("Selected date");
+
+        jLabel2.setText("Selected location");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+            .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(PreviousMap, javax.swing.GroupLayout.DEFAULT_SIZE, 655, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(NextMap, javax.swing.GroupLayout.PREFERRED_SIZE, 429, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(mapPanel, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addGroup(layout.createSequentialGroup()
@@ -341,12 +369,23 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                                 .addGap(12, 12, 12))
                             .addGroup(layout.createSequentialGroup()
                                 .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
-                                .addComponent(ShowSelectedDate, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(ShowSelectedLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(27, 27, 27)))
-                        .addComponent(jScrollPane4)))
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 699, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                                .addComponent(PreviousMap, javax.swing.GroupLayout.PREFERRED_SIZE, 549, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(NextMap, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(mapPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel1)
+                                    .addComponent(ShowSelectedDate, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(ShowSelectedLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 1066, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel2))
+                                .addGap(0, 0, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -360,26 +399,26 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                             .addComponent(YearSelectorJCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(EscBtn)
-                                    .addComponent(NewEvent))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(ShowSelectedDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(ShowSelectedLocation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(6, 6, 6))))
+                        .addGap(18, 18, 18)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(EscBtn)
+                            .addComponent(NewEvent))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 342, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(58, 58, 58)
                 .addComponent(mapPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 448, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 16, Short.MAX_VALUE)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(ShowSelectedDate, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(1, 1, 1)
+                .addComponent(jLabel2)
+                .addGap(7, 7, 7)
+                .addComponent(ShowSelectedLocation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(NextMap)
                     .addComponent(PreviousMap))
@@ -401,25 +440,41 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         updateCalendar();
     }//GEN-LAST:event_MonthSelectorJComboBoxActionPerformed
 
+    private void componentsSetEnabled(boolean setEnabled) {
+        //mapPanel is not included in this method since it follows a different logic and flow from these components
+        ShowSelectedDate.setEnabled(setEnabled);
+        ShowSelectedLocation.setEnabled(setEnabled);
+        NewEventDescription.setEnabled(setEnabled);
+        NewEventDescription.setText(null);
+        NewEventName.setEnabled(setEnabled);
+        NewEventName.setText(null);
+        if (!inNewEventCreation) {
+            PreviousMap.setEnabled(setEnabled);
+            NextMap.setEnabled(setEnabled);
+        }
+    }
+
     private void NewEventMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NewEventMouseClicked
         inNewEventCreation = true;
-        if (!NewEvent.getText().equals("Add Event")) {
-            NewEventDescription.setEnabled(true);
-            NewEventName.setEnabled(true);
-            mapPanel.setVisible(true);
-        } else {
+
+        if (NewEvent.getText().equals("Add Event")) {
+            //EVENT ADDING
             EC1.saveEvent(clickedDate, emf, NewEventName, NewEventDescription,
                     MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, CalendarJTable, MonthSelectorJComboBox);
-            NewEvent.setText("New Event");
-            updateCalendar();
+
+            //showing the just-added event
             List<Event> events = FC1.getEventsForDate(clickedDate);
             updateEventsPanel(events);
-            if (!events.isEmpty()) {
-                MC1.setMapToCurrentCoordinates(webView);
-                mapPanel.setVisible(true);
-            } else
-                mapPanel.setVisible(false);
+
+            //set components to their previous state
+            componentsSetEnabled(false);
             inNewEventCreation = false;
+            ShowSelectedDate.setText(null);
+            ShowSelectedLocation.setText(null);
+            NewEvent.setText("New Event");
+        } else {
+            mapPanel.setVisible(true);
+            componentsSetEnabled(true);
         }
     }//GEN-LAST:event_NewEventMouseClicked
 
@@ -443,19 +498,59 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }
 
     private void EscBtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EscBtnMouseClicked
+        /*if(inNewEventCreation){
+            //set components to their previous state
+            componentsSetEnabled(false);
+            inNewEventCreation = false;
+            ShowSelectedDate.setText(null);
+            ShowSelectedLocation.setText(null);
+            inNewEventCreation = false;
+            mapPanel.setVisible(false);
+            NewEvent.setText("New Event");
+            return;
+        }
+        
+        updateEventsPanel(null);
+        resetMap();
+        mapPanel.setVisible(false);*/
+    }//GEN-LAST:event_EscBtnMouseClicked
+
+    private void ShowSelectedDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ShowSelectedDateActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ShowSelectedDateActionPerformed
+
+    private void EscBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EscBtnActionPerformed
+        if(inNewEventCreation){
+            //set components to their previous state
+            componentsSetEnabled(false);
+            inNewEventCreation = false;
+            ShowSelectedDate.setText(null);
+            ShowSelectedLocation.setText(null);
+            inNewEventCreation = false;
+            mapPanel.setVisible(false);
+            NewEvent.setText("New Event");
+            return;
+        }
+        
         updateEventsPanel(null);
         resetMap();
         mapPanel.setVisible(false);
-    }//GEN-LAST:event_EscBtnMouseClicked
+    }//GEN-LAST:event_EscBtnActionPerformed
+
+    private void EscBtnKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_EscBtnKeyPressed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_EscBtnKeyPressed
 
     private JPanel createEventPanel(Event event) {
         JPanel panel = new JPanel(new BorderLayout());
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        
         String html = "<html><b>Name:</b> " + event.getName() + "<br>"
                 + "<b>Date:</b> " + event.getDate().format(DateTimeFormatter.ofPattern("MMMM d HH:mm")) + "<br>"
                 + "<b>Description:</b> " + event.getDescription() + "<br>"
                 + "<b>Coordinates:</b> Lat: " + event.getLatitude() + ", Lon: " + event.getLongitude() + "<br>"
                 + "<b>Location:</b> " + event.getLocation() + "</html>";
-        
+
         JLabel label = new JLabel(html);
         label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));  //padding added for readability
 
@@ -471,12 +566,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         });
 
         //wrapper panel for the delete button to prevent stretching
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 50));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(deleteButton);
-        deleteButton.setAlignmentY(Component.TOP_ALIGNMENT);
 
-        panel.add(label, BorderLayout.CENTER);
-        panel.add(buttonPanel, BorderLayout.EAST);
+        panel.add(label);
+        panel.add(buttonPanel);
+        
         panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         return panel;
     }
@@ -509,6 +604,34 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     public void onMapLoaded() {
         System.out.println("Map loaded, processing queued actions");
     }
+    
+    private void setupEscapeKeyBinding() {
+        /* 
+        Get the InputMap for the content pane of the frame.
+        JComponent.WHEN_IN_FOCUSED_WINDOW means the action will be triggered
+        when the window is focused, regardless of which component has focus.
+        */
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        
+        // Get the ActionMap for the content pane.
+        ActionMap actionMap = getRootPane().getActionMap();
+
+        // Define the KeyStroke for the Escape key.
+        KeyStroke escapeKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0);
+
+        // Map the KeyStroke to a unique String identifier.
+        String escapeActionKey = "pressEscapeButton";
+        inputMap.put(escapeKeyStroke, escapeActionKey);
+
+        // Map the String identifier to an AbstractAction.
+        actionMap.put(escapeActionKey, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Simulate a click on the EscBtn when the Escape key is pressed.
+                EscBtn.doClick();
+            }
+        });
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable CalendarJTable;
@@ -524,6 +647,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     private javax.swing.JComboBox<String> YearSelectorJCombobox;
     private javax.swing.JButton jButton1;
     private javax.swing.JDialog jDialog1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
