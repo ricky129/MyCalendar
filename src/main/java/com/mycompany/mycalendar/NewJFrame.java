@@ -428,18 +428,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void NewEventNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewEventNameActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_NewEventNameActionPerformed
-
-    private void NewEventNameKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_NewEventNameKeyTyped
-
-    }//GEN-LAST:event_NewEventNameKeyTyped
-
-    private void MonthSelectorJComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MonthSelectorJComboBoxActionPerformed
-        updateCalendar();
-    }//GEN-LAST:event_MonthSelectorJComboBoxActionPerformed
-
     private void componentsSetEnabled(boolean setEnabled) {
         //mapPanel is not included in this method since it follows a different logic and flow from these components
         ShowSelectedDate.setEnabled(setEnabled);
@@ -497,28 +485,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         FC1.resetCoordinates();
     }
 
-    private void EscBtnMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EscBtnMouseClicked
-        /*if(inNewEventCreation){
-            //set components to their previous state
-            componentsSetEnabled(false);
-            inNewEventCreation = false;
-            ShowSelectedDate.setText(null);
-            ShowSelectedLocation.setText(null);
-            inNewEventCreation = false;
-            mapPanel.setVisible(false);
-            NewEvent.setText("New Event");
-            return;
-        }
-        
-        updateEventsPanel(null);
-        resetMap();
-        mapPanel.setVisible(false);*/
-    }//GEN-LAST:event_EscBtnMouseClicked
-
-    private void ShowSelectedDateActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ShowSelectedDateActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_ShowSelectedDateActionPerformed
-
     private void EscBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EscBtnActionPerformed
         if(inNewEventCreation){
             //set components to their previous state
@@ -536,10 +502,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         resetMap();
         mapPanel.setVisible(false);
     }//GEN-LAST:event_EscBtnActionPerformed
-
-    private void EscBtnKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_EscBtnKeyPressed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_EscBtnKeyPressed
 
     private JPanel createEventPanel(Event event) {
         JPanel panel = new JPanel(new BorderLayout());
