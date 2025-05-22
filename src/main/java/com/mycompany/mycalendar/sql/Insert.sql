@@ -4,19 +4,19 @@
  */
 USE MyCalendarDB;
 TRUNCATE TABLE Events;
-INSERT INTO Events (name, description, date, latitude, longitude) VALUES
-    ('Project Meeting', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 51.5074000, -0.1278000),
-    ('Project2 Meeting2', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 40.7128000, -74.0060000),
-    ('Project3 Meeting3', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 48.8566000, 2.3522000),
-    ('Team Building', 'Outdoor team activities and social gathering.', '2025-04-20 12:00:00', 34.0522000, -99.9999999),
-    ('Product Launch', 'Official launch of the new product.', '2025-05-01 12:00:00', 35.6762000, 99.9999999),
-    ('Conference', 'Industry conference on emerging technologies.', '2025-06-10 12:00:00', 52.5200000, 13.4050000),
-    ('Training Session', 'Training on new software tools.', '2025-07-25 12:00:00', 37.7749000, -99.9999999),
-    ('Holiday', 'Summer holiday break.', '2025-08-05 12:00:00', 41.9028000, 12.4964000),
-    ('Workshop', 'Interactive workshop on data analysis.', '2025-09-12 12:00:00', 55.7558000, 37.6173000),
-    ('Halloween Party', 'Office Halloween celebration.', '2025-10-31 12:00:00', 19.4326000, -99.1332000),
-    ('Thanksgiving Celebration', 'Thanksgiving lunch at the office.', '2025-11-22 12:00:00', 43.6532000, -79.3832000),
-    ('Christmas Party', 'Christmas party and gift exchange.', '2025-12-25 12:00:00', -33.8688000, 99.9999999),
-    ('test', 'test.', '2025-02-27 12:00:00', 1.3521000, 99.9999999),
-    ('test2', 'test2.', '2025-02-28 12:00:00', 22.3193000, 99.9999999),
-    ('tst', 'test.', '2025-03-03 13:30:16', 25.2048000, 55.2708000);
+INSERT INTO Events (name, description, date, latitude, longitude, location) VALUES
+    ('Project Meeting', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 51.5074000, -0.1278000, 'Parliament Square, Westminster, London SW1P 3JX, United Kingdom'),
+    ('Project2 Meeting2', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 40.7128000, -74.0060000, 'City Hall Park, Broadway, New York, NY 10007, USA'),
+    ('Project3 Meeting3', 'Discuss project progress and next steps.', '2025-01-01 12:00:00', 48.8566000, 2.3522000, 'Place de la Concorde, Paris, Île-de-France, France'),
+    ('Team Building', 'Outdoor team activities and social gathering.', '2025-04-20 12:00:00', 34.0522000, -118.2437000, 'City Hall, 200 North Spring Street, Civic Center, Los Angeles, CA 90012, USA'),
+    ('Product Launch', 'Official launch of the new product.', '2025-05-01 12:00:00', 35.6762000, 139.6917000, 'Tokyo Imperial Palace, Chiyoda City, Tokyo 100-8111, Japan'),
+    ('Conference', 'Industry conference on emerging technologies.', '2025-06-10 12:00:00', 52.5200000, 13.4050000, 'Brandenburger Tor, Pariser Platz, Mitte, Berlin, 10117, Germany'),
+    ('Training Session', 'Training on new software tools.', '2025-07-25 12:00:00', 37.7749000, -122.4194000, 'City Hall, 1 Dr Carlton B Goodlett Place, Civic Center, San Francisco, CA 94102, USA'),
+    ('Holiday', 'Summer holiday break.', '2025-08-05 12:00:00', 41.9028000, 12.4964000, 'Colosseum, Piazza del Colosseo, Roma, Lazio, 00184, Italia'),
+    ('Workshop', 'Interactive workshop on data analysis.', '2025-09-12 12:00:00', 55.7558000, 37.6173000, 'Red Square, Moscow, Central Federal District, Russia'),
+    ('Halloween Party', 'Office Halloween celebration.', '2025-10-31 12:00:00', 19.4326000, -99.1332000, 'Zócalo, Centro Histórico de la Cdad. de México, Centro, Ciudad de México, 06010, México'),
+    ('Thanksgiving Celebration', 'Thanksgiving lunch at the office.', '2025-11-22 12:00:00', 43.6532000, -79.3832000, 'Nathan Phillips Square, 100 Queen Street West, Toronto, ON M5H 2N2, Canada'),
+    ('Christmas Party', 'Christmas party and gift exchange.', '2025-12-25 12:00:00', -33.8688000, 151.2153000, 'Sydney Opera House, Bennelong Point, Sydney, NSW 2000, Australia'),
+    ('test', 'test.', '2025-02-27 12:00:00', 1.3521000, 103.8601000, 'Marina Bay Sands, Bayfront Avenue, Singapore, 018956, Singapore'),
+    ('test2', 'test2.', '2025-02-28 12:00:00', 22.3193000, 114.1718000, 'Victoria Harbour, Tsim Sha Tsui, Hong Kong'),
+    ('tst', 'test.', '2025-03-03 13:30:16', 25.2048000, 55.2708000, 'Burj Khalifa, Downtown Dubai, Dubai, United Arab Emirates');

@@ -8,7 +8,7 @@ import com.google.gson.annotations.SerializedName;
  */
 public class Address {
     @SerializedName("house_number")
-    private long house_number;
+    private String house_number;
     
     @SerializedName("building")
     private String road;
@@ -35,13 +35,13 @@ public class Address {
     private String state;
     
     @SerializedName("postcode")
-    private long postcode;
+    private String postcode;
     
     @SerializedName("country")
     private String country;
     
     @SerializedName("country_code")
-    private long countryCode;
+    private String countryCode;
     
     public String getLocality(){
         if(city != null)
@@ -53,7 +53,7 @@ public class Address {
         return null;        
     }
 
-    public long getHouse_number() {
+    public String getHouse_number() {
         return house_number;
     }
 
@@ -89,7 +89,7 @@ public class Address {
         return state;
     }
 
-    public long getPostcode() {
+    public String getPostcode() {
         return postcode;
     }
 
@@ -97,7 +97,7 @@ public class Address {
         return country;
     }
 
-    public long getCountryCode() {
+    public String getCountryCode() {
         return countryCode;
     }
 }
