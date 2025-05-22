@@ -17,7 +17,6 @@ import javax.swing.JTextField;
  */
 public class EventController {
     MapsController MC1 = new MapsController();
-    JSONResponse response;
 
     // Method to save the event with the selected coordinates to the database
     public void saveEvent(
@@ -32,8 +31,6 @@ public class EventController {
             JComboBox MonthSelectorComboBox
     ) {
         
-        response = MC1.getAddressFromCoordinates();
-        
         EntityManager em = emf.createEntityManager();
         try {
             em.getTransaction().begin();
@@ -45,7 +42,7 @@ public class EventController {
                     dateFromUser,
                     selectedLatitude,
                     selectedLongitude,
-                    response.getDisplayName()
+                    MC1.getAddressFromCoordinates(selectedLatitude, selectedLongitude).getDisplayName()
             );
             em.persist(newEvent); //persist the event to the database
             em.getTransaction().commit();
