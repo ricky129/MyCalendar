@@ -2,7 +2,6 @@ package com.mycompany.mycalendar;
 
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-import javax.swing.UnsupportedLookAndFeelException;
 
 /**
  *
@@ -26,7 +25,7 @@ public class MyCalendar {
                     break;
                 }
             }
-        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException ex) {
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(NewJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
 

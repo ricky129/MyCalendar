@@ -1,11 +1,9 @@
 package com.mycompany.mycalendar.Map;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.mycompany.mycalendar.FrameController;
 import com.mycompany.mycalendar.JSONResponse;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,7 +17,6 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
 import javax.swing.JPanel;
-import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
 
 /**
@@ -40,8 +37,6 @@ public class MapsController {
     String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
     
     private final Gson gson = new Gson();
-    
-    private JSONResponse location;
 
     private void queueMapAction(Runnable action) {
         if (isMapLoaded)
@@ -154,7 +149,7 @@ public class MapsController {
                         webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
                         System.out.println("Map loaded successfully in WebView");
                         setMapLoaded(true);
-                        } catch (JSException e) {
+                        } catch (Exception e) {
                             System.err.println("Erorr executing JavaScript: " + e.getMessage());
                         }
                     } else if (newState == Worker.State.FAILED) {
@@ -208,7 +203,7 @@ public class MapsController {
         }
     }
     
-    public JSONResponse getAddressFromCoordinates(double latitude, double longitude){
+    public JSONResponse getAddressFromCoordinates(){
         
         try {
             // Construct the Nominatim API URL
@@ -220,8 +215,8 @@ public class MapsController {
             URL url = new URL(
                     NOMINATIM_REVERSE_API_URL +
                     "format=json" +
-                    "&lat=" + latitude +
-                    "&lon=" + longitude +
+                    "&lat=" + selectedLatitude +
+                    "&lon=" + selectedLongitude +
                     "&zoom=18" +
                     "&addressdetails=1"
             );
@@ -244,12 +239,12 @@ public class MapsController {
                 in.close();
                 
                  // Deserialize the JSON response directly into your Java object
-                location = gson.fromJson(response.toString(), JSONResponse.class);
+                JSONResponse geocodeResponse = gson.fromJson(response.toString(), JSONResponse.class);
                 
-                return location;
+                return geocodeResponse;
             }
             
-        } catch (JsonSyntaxException | IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(MapsController.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
@@ -268,15 +263,7 @@ public class MapsController {
     }
 
     public void setSelectedLatitude(double selectedLatitude) {
-            this.selectedLatitude = selectedLatitude;
-    }
-
-    public JSONResponse getLocation() {
-        return location;
-    }
-
-    public void setLocation(JSONResponse location) {
-        this.location = location;
+        this.selectedLatitude = selectedLatitude;
     }
 
 }

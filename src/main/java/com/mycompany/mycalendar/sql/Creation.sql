@@ -11,6 +11,5 @@ CREATE TABLE Events(
     description varchar(200) NOT NULL,
     date DATETIME NOT NULL,
     latitude DECIMAL(10, 8) NOT NULL,
-    longitude DECIMAL(10,8) NOT NULL,
-    location varchar(50)
+    longitude DECIMAL(10,8) NOT NULL
 )

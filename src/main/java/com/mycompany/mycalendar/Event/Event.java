@@ -1,5 +1,6 @@
 package com.mycompany.mycalendar.Event;
 
+import com.mycompany.mycalendar.Map.MapsController;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import javax.persistence.Column;
@@ -14,12 +15,12 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "Events")
 public class Event implements Serializable {
-    /*
+    
     public String getAddress() {
         MapsController MC1 = new MapsController();
         return MC1.getAddressFromCoordinates().getDisplayName();
     }
-    */
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Id")
@@ -35,8 +36,6 @@ public class Event implements Serializable {
     private double latitude;
     @Column (name = "longitude", nullable = false)
     private double longitude;
-    @Column (name = "location", nullable = true)
-    private String location;
 
     public Event(int Id, String name, String description, LocalDateTime date, double latitude, double longitude, String location) {
         this.Id = Id;
@@ -45,7 +44,6 @@ public class Event implements Serializable {
         this.date = date;
         this.latitude = latitude;
         this.longitude = longitude;
-        this.location = location;
     }
 
     public Event() {
@@ -99,10 +97,10 @@ public class Event implements Serializable {
         this.date = date;
     }
 
-    public void setLocation(String location) {
+    public String getLocation() {
+        return getAddress();
     }
 
-    public String getLocation() {
-        return location;
+    public void setLocation(String location) {
     }
 }
