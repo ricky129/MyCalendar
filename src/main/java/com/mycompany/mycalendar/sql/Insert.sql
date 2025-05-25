@@ -1,7 +1,3 @@
-/**
- * Author:  ricky
- * Created: 26 Mar 2025
- */
 USE MyCalendarDB;
 TRUNCATE TABLE Events;
 INSERT INTO Events (name, description, date, latitude, longitude, location) VALUES

@@ -3,7 +3,7 @@ package com.mycompany.mycalendar.Map;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.mycompany.mycalendar.FrameController;
-import com.mycompany.mycalendar.JSONResponse;
+import com.mycompany.mycalendar.JSON.JSONResponse;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;

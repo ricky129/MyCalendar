@@ -1,5 +1,6 @@
 package com.mycompany.mycalendar;
 
+import com.mycompany.mycalendar.Map.CoordinatesListListener;
 import com.mycompany.mycalendar.Event.Event;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -111,8 +112,7 @@ public class FrameController {
         return month.length(isLeapYear(currentYear));
     }
 
-    //public boolean updateInfoBox(LocalDateTime dateFromUser, JTextField eventName, JTextArea eventInfo) {
-    public List<Event> getEventsForDate(LocalDateTime dateFromUser) {
+    public List<Event> getEventsForDateFromSQL(LocalDateTime dateFromUser) {
         EntityManager em = emf.createEntityManager();
 
         try {
@@ -131,22 +131,25 @@ public class FrameController {
 
             List<Event> events = query.getResultList();
 
-            synchronized (CoordinatesList) {
-                CoordinatesList.clear();
-                for (Event event : events) {
-                    CoordinatesList.add((double) event.getLatitude());
-                    CoordinatesList.add((double) event.getLongitude());
-                    System.out.println("CoordinatesList: " + CoordinatesList.toString());
-                }
-            }
-
-            CoordinatesCurrentIndex = events.isEmpty() ? -1 : 0;
-            notifyListeners();
+            addCoordinatesToList(events);
+            
             return events;
-
         } finally {
             em.close();
         }
+    }
+
+    public void addCoordinatesToList(List<Event> events) {
+        synchronized (CoordinatesList) {
+            CoordinatesList.clear();
+            for (Event event : events) {
+                CoordinatesList.add((double) event.getLatitude());
+                CoordinatesList.add((double) event.getLongitude());
+                System.out.println("CoordinatesList: " + CoordinatesList.toString());
+            }
+        }
+        CoordinatesCurrentIndex = events.isEmpty() ? -1 : 0;
+        notifyListeners();
     }
 
     public void resetCoordinates() {
@@ -155,5 +158,13 @@ public class FrameController {
         }
         CoordinatesCurrentIndex = -1;
         notifyListeners();
+    }
+
+    public int getCoordinatesCurrentIndex() {
+        return CoordinatesCurrentIndex;
+    }
+
+    public void setCoordinatesCurrentIndex(int CoordinatesCurrentIndex) {
+        this.CoordinatesCurrentIndex = CoordinatesCurrentIndex;
     }
 }

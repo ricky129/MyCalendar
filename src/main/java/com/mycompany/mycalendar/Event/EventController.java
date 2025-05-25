@@ -1,6 +1,5 @@
 package com.mycompany.mycalendar.Event;
 
-import com.mycompany.mycalendar.JSONResponse;
 import com.mycompany.mycalendar.Map.MapsController;
 import java.time.LocalDateTime;
 import javax.persistence.EntityManager;

@@ -1,7 +1,3 @@
-/**
- * Author:  ricky
- * Created: 6 Mar 2025
- */
 CREATE DATABASE MyCalendarDB;
 USE MyCalendarDB;
 
