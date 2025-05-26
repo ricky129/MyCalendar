@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -135,22 +136,7 @@ public class MapsController {
                         // Expose the callback to JavaScript
                             JSObject window = (JSObject) webView.getEngine().executeScript("window");
                             window.setMember(("javaCallback"), callback);
-                            /*
-                        webView.getEngine().executeScript(
-                            "window.javaCallback = { " +
-                            "  invoke: function(data) { " +
-                            "    return javaCallback.invoke(data); " +
-                            "  }" +
-                            "};"
-                        );
                             
-                        // Bind the Java callback to the JavaScript object
-                        webView.getEngine().executeScript(
-                            "window.javaCallback.invoke = function(data) {" +
-                            "  return " + callback.getClass().getName() + ".invoke(data);" +
-                            "};"
-                        );
-                            */
                         // Invalidate map size if map object exists
                         webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
                         System.out.println("Map loaded successfully in WebView");
@@ -254,6 +240,23 @@ public class MapsController {
             Logger.getLogger(MapsController.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
+    }
+    
+    /**
+     * Returns a Task that fetches address information from coordinates.
+     * This task should be run on a background thread to avoid freezing the UI.
+     * @param latitude The latitude.
+     * @param longitude The longitude.
+     * @return A Task that, when run, fetches the address and returns a JSONResponse.
+     */
+    public Task<JSONResponse> createFetchAddressTask(double latitude, double longitude) {
+        return new Task<JSONResponse>() {
+            @Override
+            protected JSONResponse call() throws Exception {
+                // Call the synchronous method which performs the network request
+                return getAddressFromCoordinates(latitude, longitude);
+            }
+        };
     }
 
     public boolean isIsMapLoaded() {
