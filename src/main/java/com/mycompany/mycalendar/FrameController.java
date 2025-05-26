@@ -2,16 +2,10 @@ package com.mycompany.mycalendar;
 
 import com.mycompany.mycalendar.Map.CoordinatesListListener;
 import com.mycompany.mycalendar.Event.Event;
-import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.Year;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.persistence.TypedQuery;
 
 /**
  *
@@ -19,7 +13,6 @@ import javax.persistence.TypedQuery;
  */
 public class FrameController {
 
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
     private static final FrameController instance = new FrameController();
     private final int currentYear = Year.now().getValue();
     private final List<Double> CoordinatesList = new ArrayList<>();
@@ -91,11 +84,7 @@ public class FrameController {
             }
         }
     }
-
-    public static EntityManagerFactory getEmf() {
-        return emf;
-    }
-
+    
     public int getCurrentYear() {
         return currentYear;
     }
@@ -112,32 +101,6 @@ public class FrameController {
         return month.length(isLeapYear(currentYear));
     }
 
-    public List<Event> getEventsForDateFromSQL(LocalDateTime dateFromUser) {
-        EntityManager em = emf.createEntityManager();
-
-        try {
-            LocalDateTime startOfDay = dateFromUser.truncatedTo(ChronoUnit.DAYS);// e.g., 2025-01-01 00:00:00
-            LocalDateTime endOfDay = startOfDay.plusDays(1);
-
-            TypedQuery<Event> query = em.createQuery(
-                    "SELECT e FROM Event e WHERE e.date >= :start AND e.date < :end",
-                    Event.class
-            );
-
-            query.setParameter("start", startOfDay);
-            query.setParameter("end", endOfDay);
-
-            System.out.println("Querying with dateFromUser: " + dateFromUser);
-
-            List<Event> events = query.getResultList();
-
-            addCoordinatesToList(events);
-            
-            return events;
-        } finally {
-            em.close();
-        }
-    }
 
     public void addCoordinatesToList(List<Event> events) {
         synchronized (CoordinatesList) {

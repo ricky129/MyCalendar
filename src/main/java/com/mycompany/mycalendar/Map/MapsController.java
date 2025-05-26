@@ -28,6 +28,7 @@ import netscape.javascript.JSObject;
  */
 public class MapsController {
 
+    public static final MapsController instance = new MapsController();
     FrameController FC1 = FrameController.getInstance();
     boolean isMapLoaded = false;
     private final List<MapLoadListener> mapLoadListeners = new ArrayList<>();
@@ -37,7 +38,7 @@ public class MapsController {
     private double selectedLatitude = 0.0;
     
     String USER_AGENT = "MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)";
-    String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
+    static String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
     
     private final Gson gson = new Gson();
     
@@ -285,6 +286,10 @@ public class MapsController {
 
     public void setLocation(JSONResponse location) {
         this.location = location;
+    }
+    
+    public static MapsController getInstance() {
+        return instance;
     }
 
 }

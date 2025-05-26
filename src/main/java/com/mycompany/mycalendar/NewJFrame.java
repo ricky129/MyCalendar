@@ -4,8 +4,7 @@ import com.mycompany.mycalendar.Map.MapCallback;
 import com.mycompany.mycalendar.Map.MapLoadListener;
 import com.mycompany.mycalendar.Map.MapsController;
 import com.mycompany.mycalendar.Event.Event;
-import com.mycompany.mycalendar.Event.EventController;
-import com.mycompany.mycalendar.Event.EventService;
+import com.mycompany.mycalendar.Event.EventDAOImpl;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -21,7 +20,6 @@ import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.web.WebView;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
@@ -47,21 +45,19 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     boolean inNewEventCreation = false;
     private static boolean alreadyBuilt = false;
 
-    //EntityManagerFactory as a static field to avoid recreating it repeatedly
-    private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("MyCalendarPU");
+    private static final EntityManagerFactory emf = MyCalendar.getEmf();
     private final FrameController FC1 = FrameController.getInstance();
-    EventService ES1 = new EventService();
 
     // JFXPanel to embed the JavaFX WebView (OSM map) in Swing
     private JFXPanel fxPanel;
     private WebView webView;
     private LocalDateTime PreviousclickedDate = null;
-    LocalDateTime clickedDateUnchecked = null;
     LocalDateTime clickedDateChecked = null;
 
-    private final EventController EC1 = new EventController();
     MapsController MC1 = new MapsController();
     private static final NewJFrame instance = new NewJFrame();
+
+    EventDAOImpl EDI1 = EventDAOImpl.getInstance();
 
     public static NewJFrame getInstance() {
         return instance;
@@ -170,13 +166,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                         int day = (Integer) value;
                         Month selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
                         int year = Integer.parseInt(YearSelectorJCombobox.getSelectedItem().toString());
-                        
+
                         // Create the new clicked date
                         LocalDateTime newClickedDate = LocalDateTime.of(year, selectedMonth, day, 0, 0, 0);
                         System.out.println("Clicked date: " + newClickedDate);
-                        
+
                         // Check if the clicked date is the same as the currently selected date
-                        if (clickedDateChecked != null && newClickedDate.equals(clickedDateChecked)) {
+                        if (clickedDateChecked != null && newClickedDate.equals(clickedDateChecked) && !inNewEventCreation) {
                             System.out.println("Same date clicked again: " + newClickedDate + ", ignoring click");
                             return; // Ignore repeated clicks
                         }
@@ -197,8 +193,14 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
                         System.out.println("Data clickata: " + clickedDateChecked);
                         if (!inNewEventCreation) {
-                            List<Event> events;
-                            events = !FC1.getEventsForDateFromSQL(clickedDateChecked).isEmpty() || FC1.getEventsForDateFromSQL(clickedDateChecked) == null ? FC1.getEventsForDateFromSQL(clickedDateChecked) : ES1.getEventsForDateFromCSV(clickedDateChecked);
+
+                            List<Event> events = EDI1.getEvents(clickedDateChecked);
+                            if (events == null) {
+                                System.err.println("Event fetching failed.");
+                                return;
+                            }
+
+                            //showing the just-added event
                             updateEventsPanel(events);
                             if (events.isEmpty()) {
                                 System.out.println("No events found for date " + clickedDateChecked.toLocalDate());
@@ -461,12 +463,20 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         inNewEventCreation = true;
 
         if (NewEvent.getText().equals("Add Event")) {
-            //EVENT ADDING
-            EC1.saveEvent(clickedDateChecked, emf, NewEventName, NewEventDescription,
-                    MC1.getSelectedLatitude(), MC1.getSelectedLongitude(), NewEvent, CalendarJTable, MonthSelectorJComboBox);
+
+            if (!EDI1.save(clickedDateChecked, emf, NewEventName, NewEventDescription, SOMEBITS, EXIT_ON_CLOSE, NewEvent, CalendarJTable, MonthSelectorJComboBox)) {
+                System.err.println("Event saving failed.");
+                return;
+            }
+
+            List<Event> events = EDI1.getEvents(clickedDateChecked);
+
+            if (events == null) {
+                System.err.println("Event fetching failed.");
+                return;
+            }
 
             //showing the just-added event
-            List<Event> events = FC1.getEventsForDateFromSQL(clickedDateChecked);
             updateEventsPanel(events);
 
             //set components to their previous state
@@ -537,8 +547,18 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         JButton deleteButton = new JButton("Delete");
         deleteButton.addActionListener(e -> {
-            EC1.deleteEvent(event, emf);
-            List<Event> updatedEvents = FC1.getEventsForDateFromSQL(clickedDateChecked);
+            if (!EDI1.delete(event, emf)) {
+                System.err.println("Event removing failed.");
+                return;
+            }
+
+            List<Event> updatedEvents = EDI1.getEvents(clickedDateChecked);
+
+            if (updatedEvents == null) {
+                System.err.println("Event fetching failed.");
+                return;
+            }
+
             updateEventsPanel(updatedEvents);
             if (updatedEvents.isEmpty())
                 mapPanel.setVisible(false);

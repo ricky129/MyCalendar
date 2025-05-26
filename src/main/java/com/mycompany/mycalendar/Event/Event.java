@@ -38,8 +38,7 @@ public class Event implements Serializable {
     @Column (name = "location", nullable = true)
     private String location;
 
-    public Event(int Id, String name, String description, LocalDateTime date, double latitude, double longitude, String location) {
-        this.Id = Id;
+    public Event(String name, String description, LocalDateTime date, double latitude, double longitude, String location) {
         this.name = name;
         this.description = description;
         this.date = date;
