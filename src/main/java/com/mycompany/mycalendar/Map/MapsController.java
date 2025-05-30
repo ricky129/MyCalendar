@@ -244,7 +244,7 @@ public class MapsController {
     
     /**
      * Returns a Task that fetches address information from coordinates.
-     * This task should be run on a background thread to avoid freezing the UI.
+     * This task is run on a background thread to avoid freezing the UI.
      * @param latitude The latitude.
      * @param longitude The longitude.
      * @return A Task that, when run, fetches the address and returns a JSONResponse.

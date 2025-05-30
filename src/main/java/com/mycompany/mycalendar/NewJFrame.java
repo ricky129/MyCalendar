@@ -63,6 +63,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
     /**
      * Returns the singleton instance of NewJFrame.
+     *
      * @return The NewJFrame instance.
      */
     public static NewJFrame getInstance() {
@@ -70,8 +71,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }
 
     /**
-     * Private constructor for the Singleton pattern. Initializes components and
-     * sets up listeners.
+     * Private constructor for the Singleton pattern. Initializes components and sets up listeners.
      */
     private NewJFrame() {
         if (!alreadyBuilt) {
@@ -237,9 +237,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }
 
     /**
-     * Implementation of MapCallback interface to receive coordinates from the map.
-     * This method uses a JavaFX Task to fetch the address asynchronously
-     * to prevent UI freezing.
+     * Implementation of MapCallback interface to receive coordinates from the map. This method uses a JavaFX Task to fetch the address asynchronously to prevent UI freezing.
+     *
      * @param latitude The selected latitude.
      * @param longitude The selected longitude.
      */
@@ -248,14 +247,18 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         System.out.println("Selected coordinates: " + latitude + ", " + longitude);
         MC1.setSelectedLatitude(latitude);
         MC1.setSelectedLongitude(longitude);
-        
+
+        //ShowSelectedLocation.setText(MC1.getAddressFromCoordinates(latitude, longitude).getDisplayName());
         //Create a Task to fetch the address in a background thread
         Task<JSONResponse> fetchAddressTask = MC1.createFetchAddressTask(latitude, longitude);
-        
+
+        //Run the task on a new background thread
+        new Thread(fetchAddressTask).start();
+
         //Define what happens when the task succeeds (on JavaFX Application Thread)
         fetchAddressTask.setOnSucceeded(e -> {
             JSONResponse response = fetchAddressTask.getValue();
-            if(response != null && response.getDisplayName() != null) {
+            if (response != null && response.getDisplayName() != null) {
                 //Update the Swing UI component on the Swing Event Dispatch Thread
                 SwingUtilities.invokeLater(() -> {
                     ShowSelectedLocation.setText(response.getDisplayName());
@@ -268,19 +271,15 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 System.out.println("Address not found for coordinates: " + latitude + ", " + longitude);
             }
         });
-        
+
         //Define what happens if the task fails (on JavaFX Application Thread)
         fetchAddressTask.setOnFailed(e -> {
             Throwable cause = fetchAddressTask.getException();
-            System.err.println("Failed to fetch address: " + cause.getMessage());
+            System.out.println("Failed to fetch address: " + cause.getMessage());
             SwingUtilities.invokeLater(() -> {
                 ShowSelectedLocation.setText("Error fetching address");
             });
-            
-            //Run the task on a new background thread
-            new Thread(fetchAddressTask).start();
         });
-        
     }
 
     /**
@@ -503,6 +502,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
     /**
      * Enables or disables various UI components related to event creation and map navigation.
+     *
      * @param setEnabled true to enable, false to disable.
      */
     private void componentsSetEnabled(boolean setEnabled) {
@@ -519,10 +519,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         }
     }
 
-    
     /**
-     * Handles mouse click events on the "New Event" button.
-     * Toggles between "New Event" and "Add Event" modes and manages event saving.
+     * Handles mouse click events on the "New Event" button. Toggles between "New Event" and "Add Event" modes and manages event saving.
+     *
      * @param evt The MouseEvent.
      */
     private void NewEventMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NewEventMouseClicked
@@ -558,8 +557,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }//GEN-LAST:event_NewEventMouseClicked
 
     /**
-     * Handles mouse click events on the "Next Map" button.
-     * Moves the map to the next set of coordinates if enabled.
+     * Handles mouse click events on the "Next Map" button. Moves the map to the next set of coordinates if enabled.
+     *
      * @param evt The MouseEvent.
      */
     private void NextMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NextMapMouseClicked
@@ -568,8 +567,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }//GEN-LAST:event_NextMapMouseClicked
 
     /**
-     * Handles mouse click events on the "Previous Map" button.
-     * Moves the map to the previous set of coordinates if enabled.
+     * Handles mouse click events on the "Previous Map" button. Moves the map to the previous set of coordinates if enabled.
+     *
      * @param evt The MouseEvent.
      */
     private void PreviousMapMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_PreviousMapMouseClicked
@@ -590,8 +589,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }
 
     /**
-     * Handles action events on the "ESC" button.
-     * Exits new event creation mode or clears event display.
+     * Handles action events on the "ESC" button. Exits new event creation mode or clears event display.
+     *
      * @param evt The ActionEvent.
      */
     private void EscBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EscBtnActionPerformed
@@ -618,6 +617,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
     /**
      * Creates a JPanel displaying details of a single event, including a delete button.
+     *
      * @param event The Event object to display.
      * @return A JPanel representing the event.
      */
@@ -668,6 +668,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
     /**
      * Updates the panel that displays events. Clears existing events and adds new ones.
+     *
      * @param events The list of events to display. If null, the panel is cleared.
      */
     private void updateEventsPanel(List<Event> events) {
