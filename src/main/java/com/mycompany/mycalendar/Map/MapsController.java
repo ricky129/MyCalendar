@@ -2,6 +2,7 @@ package com.mycompany.mycalendar.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.mycompany.mycalendar.Event.EventDAOImpl;
 import com.mycompany.mycalendar.FrameController;
 import com.mycompany.mycalendar.JSON.JSONResponse;
 import java.io.BufferedReader;
@@ -35,15 +36,17 @@ public class MapsController {
     private final List<MapLoadListener> mapLoadListeners = new ArrayList<>();
     private final List<Runnable> pendingMapActions = new ArrayList<>();
 
-    private double selectedLongitude = 0.0;
-    private double selectedLatitude = 0.0;
+    private static double selectedLatitude = 51.505;
+    private static double selectedLongitude = -0.09;
     
     String USER_AGENT = "MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)";
     static String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
     
     private final Gson gson = new Gson();
     
-     private JSONResponse location;
+    private JSONResponse location;
+    
+    private static final Logger logger = Logger.getLogger(EventDAOImpl.class.getName());
 
     private void queueMapAction(Runnable action) {
         if (isMapLoaded)
@@ -100,8 +103,7 @@ public class MapsController {
             double lon = FC1.getCurrentLon();
             if (webview != null)
                 Platform.runLater(() -> {
-                    webview.getEngine().executeScript("map.setView([" + lat + ", " + lon + "], 13);"
-                            + "marker.setLatLng([" + lat + ", " + lon + "]);");
+                    webview.getEngine().executeScript("updateMapCenter(" + lat + ", " + lon + ");");
                 });
         });
     }
@@ -119,14 +121,14 @@ public class MapsController {
             webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
 
 
-            URL resourceUrl = getClass().getResource("/html/map.html");
-            if (resourceUrl == null) {
+            URL htmlMapUrl = getClass().getResource("/html/map.html");
+            if (htmlMapUrl == null) {
                 System.err.println("Error: Could not find /html/map.html in resources");
                 webView.getEngine().loadContent("<h1>Error: Map file not found</h1>");
                 setMapLoaded(true);
             } else {
-                System.out.println("Loading map from: " + resourceUrl.toExternalForm());
-                webView.getEngine().load(resourceUrl.toExternalForm());
+                System.out.println("Loading map from: " + htmlMapUrl.toExternalForm());
+                webView.getEngine().load(htmlMapUrl.toExternalForm());
                 webView.getEngine().setOnError(event -> {
                     System.err.println("WebView error: " + event.getMessage());
                 });
@@ -142,7 +144,8 @@ public class MapsController {
                         System.out.println("Map loaded successfully in WebView");
                         setMapLoaded(true);
                         } catch (JSException e) {
-                            System.err.println("Erorr executing JavaScript: " + e.getMessage());
+                            System.out.println("There was an error in comunicating with map.html.");
+                            logger.log(Level.SEVERE, "An error occurred during an operation.", e);
                         }
                     } else if (newState == Worker.State.FAILED) {
                         System.err.println("Map failed to load");
@@ -222,13 +225,13 @@ public class MapsController {
             int responseCode = connection.getResponseCode();
             
             if(responseCode == HttpURLConnection.HTTP_OK){
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String inputLine;
-                StringBuilder response = new StringBuilder();
-                
-                while((inputLine = in.readLine()) != null)
-                    response.append(inputLine);
-                in.close();
+                StringBuilder response;
+                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
+                    String inputLine;
+                    response = new StringBuilder();
+                    while((inputLine = in.readLine()) != null)
+                        response.append(inputLine);
+                }
                 
                  // Deserialize the JSON response directly into your Java object
                 location = gson.fromJson(response.toString(), JSONResponse.class);
@@ -237,6 +240,7 @@ public class MapsController {
             }
             
         } catch (JsonSyntaxException | IOException ex) {
+            System.out.println("There was an erorr in the JSONResponse syntax.");
             Logger.getLogger(MapsController.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
@@ -263,16 +267,12 @@ public class MapsController {
         return isMapLoaded;
     }
 
-    public void setIsMapLoaded(boolean isMapLoaded) {
-        this.isMapLoaded = isMapLoaded;
-    }
-
     public double getSelectedLongitude() {
         return selectedLongitude;
     }
 
     public void setSelectedLongitude(double selectedLongitude) {
-        this.selectedLongitude = selectedLongitude;
+        MapsController.selectedLongitude = selectedLongitude;
     }
 
     public double getSelectedLatitude() {
@@ -280,7 +280,7 @@ public class MapsController {
     }
 
     public void setSelectedLatitude(double selectedLatitude) {
-        this.selectedLatitude = selectedLatitude;
+        MapsController.selectedLatitude = selectedLatitude;
     }
 
     public JSONResponse getLocation() {

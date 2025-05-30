@@ -45,7 +45,6 @@ import javax.swing.table.DefaultTableModel;
 public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoadListener {
 
     boolean inNewEventCreation = false;
-    private static boolean alreadyBuilt = false;
 
     private static final EntityManagerFactory emf = MyCalendar.getEmf();
     private final FrameController FC1 = FrameController.getInstance();
@@ -74,55 +73,57 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      * Private constructor for the Singleton pattern. Initializes components and sets up listeners.
      */
     private NewJFrame() {
-        if (!alreadyBuilt) {
-            this.mapPanel = new JPanel(new java.awt.BorderLayout());
-            initComponents();
+        this.mapPanel = new JPanel(new java.awt.BorderLayout());
+        initComponents();
 
-            setupEscapeKeyBinding();
+        setupEscapeKeyBinding();
 
-            SwingUtilities.invokeLater(()
-                    -> updateCalendar()
-            );
-            addTableClickListener();
+        SwingUtilities.invokeLater(()
+                -> updateCalendar()
+        );
+        addTableClickListener();
 
-            mapPanel.setVisible(false);
+        mapPanel.setVisible(false);
 
-            //set components to their initial state
-            componentsSetEnabled(false);
+        //set components to their initial state
+        componentsSetEnabled(false);
 
+        SwingUtilities.invokeLater(() -> {
+            MC1.addMapLoadListener(this);
+            initializeMap();
+            updateCalendar();
+        });
+
+        /**
+         * Adds a listener to the FrameController's coordinates list. This listener is invoked when the size or current index of the coordinates list changes (when MapsController.notifyListeners() is called), which in turn updates the enabled state of the "Next Map" and "Previous Map" buttons.
+         *
+         * @param size The current size of the coordinates list.
+         * @param currentIndex The current index in the coordinates list.
+         */
+        FC1.addCoordinatesListListener((size, currentIndex) -> {
             SwingUtilities.invokeLater(() -> {
-                MC1.addMapLoadListener(this);
-                initializeMap();
-                updateCalendar();
+                NextMap.setEnabled(FC1.hasNextCoordinates());
+                PreviousMap.setEnabled(FC1.hasPreviousCoordinates());
             });
+        });
 
-            FC1.addCoordinatesListListener((size, currentIndex) -> {
-                SwingUtilities.invokeLater(() -> {
-                    NextMap.setEnabled(FC1.hasNextCoordinates());
-                    PreviousMap.setEnabled(FC1.hasPreviousCoordinates());
-                });
-            });
+        NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
 
-            //JTextField NewEventDescription listener
-            NewEventDescription.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                NewEvent.setText("Add Event");
+            }
 
-                @Override
-                public void insertUpdate(DocumentEvent e) {
-                    NewEvent.setText("Add Event");
-                }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
+            }
 
-                @Override
-                public void removeUpdate(DocumentEvent e) {
-                    NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
-                }
-
-                @Override
-                public void changedUpdate(DocumentEvent e) {
-                    NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
-                }
-            });
-            alreadyBuilt = true;
-        }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                NewEvent.setText(!NewEventDescription.getText().isEmpty() ? "Add Event" : "New Event");
+            }
+        });
     }
 
     /**
@@ -169,7 +170,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             public void mouseClicked(MouseEvent e) {
                 if (CalendarJTable.isEnabled()) {
                     /**
-                     * This gets the JTable object that was clicked. e.getSource() returns the component that triggered the event, which is the jTable1 in this case.
+                     * Gets the JTable object that was clicked. e.getSource() returns the component that triggered the event, which is the jTable1 in this case.
                      */
                     JTable target = (JTable) e.getSource();
 
@@ -207,7 +208,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                         if (inNewEventCreation)
                             ShowSelectedDate.setText(clickedDateChecked.toString());
 
-                        System.out.println("Data clickata: " + clickedDateChecked);
                         if (!inNewEventCreation) {
 
                             List<Event> events = EDI1.getEvents(clickedDateChecked);
@@ -216,18 +216,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                                 return;
                             }
 
-                            //showing the just-added event
                             updateEventsPanel(events);
-                            if (events.isEmpty()) {
-                                System.out.println("No events found for date " + clickedDateChecked.toLocalDate());
-                                jPanel1.removeAll();
-                                jPanel1.revalidate();
-                                jPanel1.repaint();
-                                mapPanel.setVisible(false);
-                            } else {
-                                MC1.setMapToCurrentCoordinates(webView);
-                                mapPanel.setVisible(true);
-                            }
                         }
                     } else
                         mapPanel.setVisible(false);
@@ -245,10 +234,10 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     @Override
     public void setCoordinates(double latitude, double longitude) {
         System.out.println("Selected coordinates: " + latitude + ", " + longitude);
+        ShowSelectedLocation.setText("Fetching location...");
         MC1.setSelectedLatitude(latitude);
         MC1.setSelectedLongitude(longitude);
 
-        //ShowSelectedLocation.setText(MC1.getAddressFromCoordinates(latitude, longitude).getDisplayName());
         //Create a Task to fetch the address in a background thread
         Task<JSONResponse> fetchAddressTask = MC1.createFetchAddressTask(latitude, longitude);
 
@@ -268,7 +257,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 SwingUtilities.invokeLater(() -> {
                     ShowSelectedLocation.setText("Address not found.");
                 });
-                System.out.println("Address not found for coordinates: " + latitude + ", " + longitude);
+                System.err.println("Address not found for coordinates: " + latitude + ", " + longitude);
             }
         });
 
@@ -501,35 +490,14 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }// </editor-fold>//GEN-END:initComponents
 
     /**
-     * Enables or disables various UI components related to event creation and map navigation.
-     *
-     * @param setEnabled true to enable, false to disable.
-     */
-    private void componentsSetEnabled(boolean setEnabled) {
-        //mapPanel is not included in this method since it follows a different logic and flow from these components
-        ShowSelectedDate.setEnabled(setEnabled);
-        ShowSelectedLocation.setEnabled(setEnabled);
-        NewEventDescription.setEnabled(setEnabled);
-        NewEventDescription.setText(null);
-        NewEventName.setEnabled(setEnabled);
-        NewEventName.setText(null);
-        if (!inNewEventCreation) {
-            PreviousMap.setEnabled(setEnabled);
-            NextMap.setEnabled(setEnabled);
-        }
-    }
-
-    /**
      * Handles mouse click events on the "New Event" button. Toggles between "New Event" and "Add Event" modes and manages event saving.
      *
      * @param evt The MouseEvent.
      */
     private void NewEventMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_NewEventMouseClicked
-        inNewEventCreation = true;
-
         if (NewEvent.getText().equals("Add Event")) {
 
-            if (!EDI1.save(clickedDateChecked, emf, NewEventName, NewEventDescription, SOMEBITS, EXIT_ON_CLOSE, NewEvent, CalendarJTable, MonthSelectorJComboBox)) {
+            if (!EDI1.save(clickedDateChecked, emf, NewEventName, NewEventDescription)) {
                 System.err.println("Event saving failed.");
                 return;
             }
@@ -547,12 +515,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             //set components to their previous state
             componentsSetEnabled(false);
             inNewEventCreation = false;
-            ShowSelectedDate.setText(null);
-            ShowSelectedLocation.setText(null);
             NewEvent.setText("New Event");
+            resetMap();
         } else {
-            mapPanel.setVisible(true);
+            inNewEventCreation = true;
             componentsSetEnabled(true);
+            if (MC1.isMapLoaded())
+                mapPanel.setVisible(true);
         }
     }//GEN-LAST:event_NewEventMouseClicked
 
@@ -580,12 +549,36 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      * Resets the map's selected coordinates and disables navigation buttons.
      */
     public void resetMap() {
-        MC1.setSelectedLongitude(0.0);
-        MC1.setSelectedLatitude(0.0);
-        PreviousMap.setEnabled(false);
-        NextMap.setEnabled(false);
+        MC1.setSelectedLatitude(51.505);
+        MC1.setSelectedLongitude(-0.09);
+        /*PreviousMap.setEnabled(false);
+        NextMap.setEnabled(false);*/
         FC1.getCoordinatesList().clear();
         FC1.resetCoordinates();
+    }
+
+    /**
+     * Enables or disables various UI components related to event creation and map navigation.
+     * mapPanel is not included in this method since it follows a different logic and flow from these components
+     * @param setEnabled true to enable, false to disable.
+     */
+    private void componentsSetEnabled(boolean setEnabled) {
+        ShowSelectedDate.setEnabled(setEnabled);
+        ShowSelectedDate.setText(null);
+        
+        ShowSelectedLocation.setEnabled(setEnabled);
+        ShowSelectedLocation.setText(null);
+        
+        NewEventDescription.setEnabled(setEnabled);
+        NewEventDescription.setText(null);
+        
+        NewEventName.setEnabled(setEnabled);
+        NewEventName.setText(null);
+        
+        if (!inNewEventCreation) {
+            PreviousMap.setEnabled(setEnabled);
+            NextMap.setEnabled(setEnabled);
+        }
     }
 
     /**
@@ -608,7 +601,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         updateEventsPanel(null);
         resetMap();
-        mapPanel.setVisible(false);
     }//GEN-LAST:event_EscBtnActionPerformed
 
     private void NewEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewEventActionPerformed
@@ -649,10 +641,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             }
 
             updateEventsPanel(updatedEvents);
-            if (updatedEvents.isEmpty())
-                mapPanel.setVisible(false);
-            else
-                MC1.setMapToCurrentCoordinates(webView);
         });
 
         //wrapper panel for the delete button to prevent stretching
@@ -673,24 +661,24 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      */
     private void updateEventsPanel(List<Event> events) {
         jPanel1.removeAll();
-        if (events != null)
+        if (events != null && !events.isEmpty()) {
+
             for (Event event : events) {
                 JPanel eventPanel = createEventPanel(event);
                 jPanel1.add(eventPanel);
             }
+
+            MC1.setMapToCurrentCoordinates(webView);
+            mapPanel.setVisible(true);
+
+        } else {
+            System.out.println("No events found for date " + clickedDateChecked.toLocalDate());
+            jPanel1.removeAll();
+            mapPanel.setVisible(false);
+        }
+
         jPanel1.revalidate();
         jPanel1.repaint();
-    }
-
-    /**
-     * Enables the calendar table and makes it visible.
-     */
-    public void enableCalendar() {
-        SwingUtilities.invokeLater(() -> {
-            CalendarJTable.setEnabled(true);
-            CalendarJTable.setVisible(true);
-            System.out.println("Calendar enabled: " + CalendarJTable.isEnabled());
-        });
     }
 
     /**
@@ -698,7 +686,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      */
     @Override
     public void onMapLoaded() {
-        System.out.println("Map loaded, processing queued actions");
+        System.out.println("Map loaded, processing queued actions if any");
+        if (inNewEventCreation)
+            SwingUtilities.invokeLater(() -> {
+                mapPanel.setVisible(true);
+                MC1.setMapToCurrentCoordinates(webView);
+            });
     }
 
     /**

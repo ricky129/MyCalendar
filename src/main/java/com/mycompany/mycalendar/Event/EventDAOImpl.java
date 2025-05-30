@@ -20,9 +20,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.persistence.TypedQuery;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import static org.hibernate.type.InstantType.FORMATTER;
@@ -39,6 +36,8 @@ public class EventDAOImpl implements IEventDAO {
 
     // Create a logger for this class. It's common to name the logger after the class.
     private static final Logger logger = Logger.getLogger(EventDAOImpl.class.getName());
+    
+    MapsController MC1 = MapsController.getInstance();
 
     private EntityManager getEntityManger() {
         return emf.createEntityManager();
@@ -68,6 +67,7 @@ public class EventDAOImpl implements IEventDAO {
             System.out.println("Record updated");
         } catch (Exception e) {
             em.getTransaction().rollback();
+            System.out.println("Event updating failed.");
             logger.log(Level.SEVERE, "An error occurred during an operation.", e);
         } finally {
             em.close();
@@ -89,11 +89,11 @@ public class EventDAOImpl implements IEventDAO {
     }
 
     @Override
-    public boolean save(LocalDateTime dateFromUser, EntityManagerFactory emf, JTextField NewEventName, JTextArea NewEventDescription, double selectedLatitude, double selectedLongitude, JButton NewEvent, JTable CalendarJTable, JComboBox MonthSelectorComboBox) {
-        if (saveEventSQL(dateFromUser, emf, NewEventName, NewEventDescription, selectedLatitude, selectedLongitude, NewEvent, CalendarJTable, MonthSelectorComboBox))
+    public boolean save(LocalDateTime dateFromUser, EntityManagerFactory emf, JTextField NewEventName, JTextArea NewEventDescription) {
+        if (saveEventSQL(dateFromUser, emf, NewEventName, NewEventDescription))
             return true;
         else
-            return saveEventCSV(dateFromUser, NewEventName, NewEventDescription, selectedLatitude, selectedLongitude, NewEvent);
+            return saveEventCSV(dateFromUser, NewEventName, NewEventDescription);
     }
 
     @Override
@@ -136,14 +136,14 @@ public class EventDAOImpl implements IEventDAO {
         }
     }
 
-    private static List<Event> getEventsForDateFromCSV(LocalDateTime dateFromUser) {
+    private List<Event> getEventsForDateFromCSV(LocalDateTime dateFromUser) {
         List<Event> events = new ArrayList<>();
         String line;
         String csvFile = "events.csv"; // Assuming events.csv is in the project root or accessible path
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         LocalDateTime startOfDay = dateFromUser.truncatedTo(ChronoUnit.DAYS);
         LocalDateTime endOfDay = startOfDay.plusDays(1);
-        System.out.print("Reading events on dateFromuser: " + dateFromUser + " in CSV...");
+        System.out.print("Fetching events on dateFromuser: " + dateFromUser + " in CSV...");
         try (BufferedReader br = new BufferedReader(new FileReader(csvFile))) {
             // Read the header line
             br.readLine(); // Skip the header row: "name,description,date,latitude,longitude,location"
@@ -165,6 +165,7 @@ public class EventDAOImpl implements IEventDAO {
                 }
             }
         } catch (IOException e) {
+            System.out.println("Events fetching failed.");
             logger.log(Level.SEVERE, "An error occurred during an operation.", e);
         }
         // The addCoordinatesToList method is not provided, so it's commented out.
@@ -174,9 +175,10 @@ public class EventDAOImpl implements IEventDAO {
     }
 
     // Method to save the event with the selected coordinates to the database
-    private static boolean saveEventSQL(LocalDateTime dateFromUser, EntityManagerFactory emf, JTextField NewEventName, JTextArea NewEventDescription, double selectedLatitude, double selectedLongitude, JButton NewEvent, JTable CalendarJTable, JComboBox MonthSelectorComboBox) {
+    private boolean saveEventSQL(LocalDateTime dateFromUser, EntityManagerFactory emf, JTextField NewEventName, JTextArea NewEventDescription) {
+        double selectedLatitude = MC1.getSelectedLatitude();
+        double selectedLongitude = MC1.getSelectedLongitude();
         EntityManager em = emf.createEntityManager();
-        MapsController MC1 = MapsController.getInstance();
 
         System.out.println("Saving event " + NewEventName.getName() + " to SQL...");
         try {
@@ -190,8 +192,8 @@ public class EventDAOImpl implements IEventDAO {
             //NewEvent.setText("");
         } catch (Exception e) {
             em.getTransaction().rollback();
+            System.out.println("Database event adding failed.");
             logger.log(Level.SEVERE, "An error occurred during an operation.", e);
-            System.out.println("Failed to add event to database");
             return false;
         } finally {
             em.close();
@@ -210,6 +212,7 @@ public class EventDAOImpl implements IEventDAO {
                 em.remove(toDelete);
             em.getTransaction().commit();
         } catch (Exception e) {
+            System.out.println("Event deletion failed.");
             if (em.getTransaction().isActive())
                 em.getTransaction().rollback();
             logger.log(Level.SEVERE, "An error occurred during an operation.", e);
@@ -232,8 +235,9 @@ public class EventDAOImpl implements IEventDAO {
         );
     }
 
-    private static boolean saveEventCSV(LocalDateTime dateFromUser, JTextField NewEventName, JTextArea NewEventDescription, double selectedLatitude, double selectedLongitude, JButton NewEvent) {
-        MapsController MC1 = MapsController.getInstance();
+    private boolean saveEventCSV(LocalDateTime dateFromUser, JTextField NewEventName, JTextArea NewEventDescription) {
+        double selectedLatitude = MC1.getSelectedLatitude();
+        double selectedLongitude = MC1.getSelectedLongitude();
 
         System.out.println("Saving event to CSV with Event: " + NewEventName.getName() + "...");
         try {
@@ -258,8 +262,10 @@ public class EventDAOImpl implements IEventDAO {
                     lines.add(line);
                 }
             } catch (FileNotFoundException e) {
+                System.out.println("events.csv was not found. Creating it now.");
                 // If file doesn't exist, create it with a header
                 lines.add("name,description,date,latitude,longitude,location");
+                logger.log(Level.SEVERE, "An error occurred during an operation.", e);
             }
 
             // Append the new event as a CSV line
@@ -272,15 +278,10 @@ public class EventDAOImpl implements IEventDAO {
                     bw.newLine();
                 }
             }
-
-            // Reset UI after saving
-            NewEventName.setText("");
-            NewEventDescription.setText("");
-            NewEvent.setText(""); // This might not be appropriate for a JButton's text
             return true;
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "An error occurred during an operation.", e);
             System.out.println("Failed to add event to CSV file");
+            logger.log(Level.SEVERE, "An error occurred during an operation.", e);
             return false;
         }
     }
@@ -328,8 +329,8 @@ public class EventDAOImpl implements IEventDAO {
                     lines.add(line); // Add malformed lines back
             }
         } catch (IOException e) {
+            System.out.println("Failed to read CSV file for event removal");
             logger.log(Level.SEVERE, "An error occurred during an operation.", e);
-            System.out.println("Failed to read CSV file for deletion");
             return false;
         }
 

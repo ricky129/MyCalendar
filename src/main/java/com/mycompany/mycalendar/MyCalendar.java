@@ -28,6 +28,7 @@ public class MyCalendar {
                 }
             }
         } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException ex) {
+            System.out.println("There was an error in the program initialization.");
             logger.log(Level.SEVERE, "An error occurred during an operation.", ex);
         }
 

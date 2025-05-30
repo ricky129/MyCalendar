@@ -40,13 +40,13 @@ public class FrameController {
     public double getCurrentLat() {
         if (CoordinatesCurrentIndex >= 0 && CoordinatesCurrentIndex < CoordinatesList.size())
             return CoordinatesList.get(CoordinatesCurrentIndex);
-        return 0.0; // Default if no coordinates
+        return 51.505; // Default if no coordinates
     }
 
     public double getCurrentLon() {
         if (CoordinatesCurrentIndex + 1 < CoordinatesList.size())
             return CoordinatesList.get(CoordinatesCurrentIndex + 1);
-        return 0.0; // Default if no coordinates
+        return -0.09; // Default if no coordinates
     }
 
     public boolean hasNextCoordinates() {
@@ -76,6 +76,11 @@ public class FrameController {
         }
     }
 
+    /**
+     * Notifies all registered CoordinatesListListeners about a change
+     * in the coordinates list or the current index.
+     * This method is typically called after operations that alter `CoordinatesList` or `CoordinatesCurrentIndex`.
+     */
     private void notifyListeners() {
         synchronized (indexListeners) {
             int size = CoordinatesList.size();
@@ -101,7 +106,12 @@ public class FrameController {
         return month.length(isLeapYear(currentYear));
     }
 
-
+    /**
+     * Populates the internal coordinates list with latitudes and longitudes from a list of events.
+     * Clears any existing coordinates before adding new ones. Sets the current index to the first event
+     * if the list is not empty, and then notifies listeners.
+     * @param events A list of Event objects from which to extract coordinates.
+     */
     public void addCoordinatesToList(List<Event> events) {
         synchronized (CoordinatesList) {
             CoordinatesList.clear();

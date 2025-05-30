@@ -15,7 +15,7 @@ import javax.swing.JTextField;
  */
 public interface IEventDAO {
     Event findById(int id);
-    boolean save(LocalDateTime dateFromUser, EntityManagerFactory emf, JTextField NewEventName, JTextArea NewEventDescription, double selectedLatitude, double selectedLongitude, JButton NewEvent, JTable CalendarJTable, JComboBox MonthSelectorComboBox);
+    boolean save(LocalDateTime dateFromUser, EntityManagerFactory emf, JTextField NewEventName, JTextArea NewEventDescription);
     void update(Event event);
     boolean delete(Event event, EntityManagerFactory emf);
     List<Event> getEvents(LocalDateTime dateFromUser);
