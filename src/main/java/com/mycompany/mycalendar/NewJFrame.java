@@ -8,7 +8,9 @@ import com.mycompany.mycalendar.Event.EventDAOImpl;
 import com.mycompany.mycalendar.JSON.JSONResponse;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.FlowLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -26,7 +28,6 @@ import javax.persistence.EntityManagerFactory;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -82,7 +83,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         this.MC1 = MapsController.getInstance();
         this.EDI1 = EventDAOImpl.getInstance();
 
-        this.mapPanel = new JPanel(new java.awt.BorderLayout());
+        //this.mapPanel = new JPanel(new java.awt.BorderLayout());
         initComponents();
 
         /**
@@ -98,7 +99,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         addTableClickListener();
 
-        mapPanel.setVisible(false);
+        mapPanelSetVisible(false);
 
         //set components to their initial state
         componentsSetEnabled(false);
@@ -212,11 +213,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                     if (row != -1 && column != -1 && value != null) {
                         System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
                         int day = (Integer) value;
-                        Month selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
-                        int year = Integer.parseInt(YearSelectorJComboBox.getSelectedItem().toString());
 
                         // Create the new clicked date
-                        LocalDateTime newClickedDate = LocalDateTime.of(year, selectedMonth, day, 0, 0, 0);
+                        LocalDateTime newClickedDate = LocalDateTime.of(selectedYear.getValue(), selectedMonth.getValue(), day, 0, 0, 0);
                         System.out.println("Clicked date: " + newClickedDate);
 
                         // Check if the clicked date is the same as the currently selected date
@@ -237,18 +236,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                         if (inNewEventCreation)
                             ShowSelectedDate.setText(clickedDateChecked.toString());
 
-                        if (!inNewEventCreation) {
+                        if (!inNewEventCreation)
+                            updateEventsPanel(EDI1.getEvents(clickedDateChecked));
 
-                            List<Event> events = EDI1.getEvents(clickedDateChecked);
-                            if (events == null) {
-                                System.err.println("Event fetching failed.");
-                                return;
-                            }
-
-                            updateEventsPanel(events);
-                        }
+                        if (MC1.isMapLoaded())
+                            mapPanelSetVisible(true);
                     } else
-                        mapPanel.setVisible(false);
+                        mapPanelSetVisible(false);
                 }
             }
         });
@@ -468,8 +462,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                                     .addComponent(YearSelectorJComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(12, 12, 12)
-                        .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 699, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 699, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -484,7 +478,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                                     .addComponent(ShowSelectedDate, javax.swing.GroupLayout.PREFERRED_SIZE, 169, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(ShowSelectedLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 1066, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel2))
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 95, Short.MAX_VALUE)))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -555,11 +549,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             inNewEventCreation = false;
             NewEvent.setText("New Event");
             resetMap();
+            updateEventsPanel(EDI1.getEvents(clickedDateChecked));
         } else {
             inNewEventCreation = true;
             componentsSetEnabled(true);
             if (MC1.isMapLoaded())
-                mapPanel.setVisible(true);
+                mapPanelSetVisible(true);
         }
     }//GEN-LAST:event_NewEventMouseClicked
 
@@ -622,25 +617,31 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      * @param evt The ActionEvent.
      */
     private void EscBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EscBtnActionPerformed
-        if (inNewEventCreation) {
-            //set components to their previous state
-            componentsSetEnabled(false);
-            inNewEventCreation = false;
-            ShowSelectedDate.setText(null);
-            ShowSelectedLocation.setText(null);
-            inNewEventCreation = false;
-            mapPanel.setVisible(false);
-            NewEvent.setText("New Event");
-            return;
-        }
+        SwingUtilities.invokeLater(() -> {
+            if (inNewEventCreation) {
+                //set components to their previous state
+                componentsSetEnabled(false);
+                inNewEventCreation = false;
+                ShowSelectedDate.setText(null);
+                ShowSelectedLocation.setText(null);
+                inNewEventCreation = false;
+                NewEvent.setText("New Event");
+                return;
+            }
 
-        updateEventsPanel(null);
-        resetMap();
+            mapPanelSetVisible(false);
+            mapPanel.revalidate();
+            mapPanel.repaint();
+            clickedDateChecked = null;
+            PreviousclickedDate = null;
+            updateEventsPanel(null);
+            resetMap();
+        });
     }//GEN-LAST:event_EscBtnActionPerformed
 
     // This method has the same problem as MonthSelectorJComboBoxActionPerformed
     private void NewEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewEventActionPerformed
-
+        //NewEvent.doClick();
     }//GEN-LAST:event_NewEventActionPerformed
 
     private void YearSelectorJComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_YearSelectorJComboBoxActionPerformed
@@ -651,23 +652,67 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }//GEN-LAST:event_YearSelectorJComboBoxActionPerformed
 
     /**
-     * Creates a JPanel displaying details of a single event, including a delete button.
+     * Creates a JPanel displaying details of a single event, including a delete button. This method is AI generated because I can't be bothered dealing with UI.
      *
      * @param event The Event object to display.
      * @return A JPanel representing the event.
      */
     private JPanel createEventPanel(Event event) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        JPanel panel = new JPanel(new BorderLayout()); // Main panel for each event
 
-        String html = "<html><b>Name:</b> " + event.getName() + "<br>"
+        // Calculate a suitable width for the JLabel to enable wrapping
+        // Ensure this is dynamically fetched or a sensible default.
+        int panelWidth = jScrollPane4.getViewport().getWidth();
+        if (panelWidth <= 0)
+            // Fallback or initial estimate. Use a value that generally works for the desired compactness.
+            // This should be the target width of the *entire* event panel within the scroll pane.
+            panelWidth = 280; // A reasonable default for a compact panel that fits the delete button
+
+        // Calculate the content width for the HTML body.
+        // This is the space *available for the text within the label*.
+        // It should be less than panelWidth to account for padding, button width, and button spacing.
+        int contentWidth = Math.max(10, panelWidth - 120); // Continue aggressive reduction for text width
+
+        String locationText = event.getLocation() != null ? event.getLocation() : "N/A";
+
+        // *** Refined NEW LOGIC: Programmatically insert <br> tags into locationText ***
+        // This is more robust than relying purely on HTML body width for complex strings.
+        // We will target a line length (e.g., around 25-30 chars) and insert <br> strategically.
+        StringBuilder wrappedLocationText = new StringBuilder();
+        String[] words = locationText.split(" ");
+        int currentLineLength = 0;
+        int targetLineLength = 25; // Aim for lines around 25 characters long
+
+        for (String word : words) {
+            if (currentLineLength + word.length() + 1 > targetLineLength && currentLineLength > 0) {
+                wrappedLocationText.append("<br>");
+                currentLineLength = 0;
+            }
+            if (currentLineLength > 0) {
+                wrappedLocationText.append(" ");
+                currentLineLength += 1;
+            }
+            wrappedLocationText.append(word);
+            currentLineLength += word.length();
+        }
+        locationText = wrappedLocationText.toString();
+
+        String htmlContent = "<html><body style='width: " + contentWidth + "px;'>"
+                + "<b>Name:</b> " + event.getName() + "<br>"
                 + "<b>Date:</b> " + event.getDate().format(DateTimeFormatter.ofPattern("MMMM d HH:mm")) + "<br>"
                 + "<b>Description:</b> " + event.getDescription() + "<br>"
-                + "<b>Coordinates:</b> Lat: " + event.getLatitude() + ", Lon: " + event.getLongitude() + "<br>"
-                + "<b>Location:</b> " + event.getLocation() + "</html>";
+                + "<b>Coordinates:</b> Lat: " + String.format("%.4f", event.getLatitude()) + ",<br> Lon: " + String.format("%.4f", event.getLongitude()) + "<br>"
+                + "<b>Location:</b> " + locationText + "</body></html>"; // Now uses the potentially modified locationText
 
-        JLabel label = new JLabel(html);
-        label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));  //padding added for readability
+        JLabel label = new JLabel(htmlContent);
+        label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5)); // Add padding around text
+        label.setVerticalAlignment(JLabel.TOP); // Align text to the top
+        // Setting preferred and maximum size here might conflict with BoxLayout if not careful.
+        // For BoxLayout, often better to let it calculate based on its children's preferred sizes,
+        // and ensure the HTML content *inside* the JLabel itself forces the width.
+        // However, keeping them as a safeguard if the HTML isn't perfectly respected.
+        label.setMaximumSize(new java.awt.Dimension(contentWidth, Short.MAX_VALUE));
+        label.setPreferredSize(new java.awt.Dimension(contentWidth, label.getPreferredSize().height));
 
         JButton deleteButton = new JButton("Delete");
         deleteButton.addActionListener(e -> {
@@ -686,14 +731,32 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             updateEventsPanel(updatedEvents);
         });
 
-        //wrapper panel for the delete button to prevent stretching
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(deleteButton);
+        // --- Use GridBagLayout for precise control of label and button placement ---
+        JPanel contentAndButtonPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        panel.add(label);
-        panel.add(buttonPanel);
+        // Constraints for the JLabel (Event Details)
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.BOTH; // Fill both for wrapping
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.insets = new Insets(0, 0, 0, 5);
+        contentAndButtonPanel.add(label, gbc);
 
-        panel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        // Constraints for the Delete Button
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0.0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.NORTHEAST;
+        gbc.insets = new Insets(5, 0, 0, 5);
+        contentAndButtonPanel.add(deleteButton, gbc);
+
+        // Add the GridBagLayout panel to the main event panel
+        panel.add(contentAndButtonPanel, BorderLayout.CENTER);
+
+        panel.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // Add a border to the event panel
         return panel;
     }
 
@@ -704,20 +767,15 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      */
     private void updateEventsPanel(List<Event> events) {
         jPanel1.removeAll();
-        if (events != null && !events.isEmpty()) {
 
+        if (events != null && !events.isEmpty())
             for (Event event : events) {
-                JPanel eventPanel = createEventPanel(event);
-                jPanel1.add(eventPanel);
+                jPanel1.add(createEventPanel(event));
             }
-
-            MC1.setMapToCurrentCoordinates(webView);
-            mapPanel.setVisible(true);
-
-        } else {
-            System.out.println("No events found for date " + clickedDateChecked.toLocalDate());
-            jPanel1.removeAll();
-            mapPanel.setVisible(false);
+        else {
+            JLabel noEventsLabel = new JLabel("No events for this date.");
+            noEventsLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            jPanel1.add(noEventsLabel);
         }
 
         jPanel1.revalidate();
@@ -732,9 +790,30 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         System.out.println("Map loaded, processing queued actions if any");
         if (inNewEventCreation)
             SwingUtilities.invokeLater(() -> {
-                mapPanel.setVisible(true);
+                mapPanelSetVisible(true);
                 MC1.setMapToCurrentCoordinates(webView);
             });
+    }
+
+    /**
+     * Hide/show the map based on the parameter. Also, revalidate and repaint the Swing components to ensure map renders correctly
+     *
+     * @param visible true = map is visible, false = map is not visible
+     */
+    private void mapPanelSetVisible(boolean visible) {
+        mapPanel.setVisible(visible);
+
+        SwingUtilities.invokeLater(() -> {
+            if (fxPanel != null) { 
+            fxPanel.revalidate();
+            fxPanel.repaint();
+            }
+            mapPanel.revalidate();
+            mapPanel.repaint();
+
+            this.revalidate();
+            this.repaint();
+        });
     }
 
     /**
