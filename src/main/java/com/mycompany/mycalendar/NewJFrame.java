@@ -795,6 +795,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         System.out.println("Map loaded, processing queued actions if any");
         RevalidateRepaint();
         MC1.setMapToCurrentCoordinates(webView);
+        mapPanel.setVisible(true);
     }
 
     /**
