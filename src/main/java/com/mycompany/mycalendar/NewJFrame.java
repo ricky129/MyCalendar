@@ -81,15 +81,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     private NewJFrame() {
         this.MC1 = MapsController.getInstance();
         this.EDI1 = EventDAOImpl.getInstance();
-        
+
         this.mapPanel = new JPanel(new java.awt.BorderLayout());
         initComponents();
-        
+
         /**
-         * A row is added to the calendar table. This is so much 
-         * less hassle than creating a new model just to use the
-         * same with one more row. This edit is necessary for months
-         * which span to more than 5 weeks, like March 2026.
+         * A row is added to the calendar table. This is so much less hassle than creating a new model just to use the same with one more row. This edit is necessary for months which span to more than 5 weeks, like March 2026.
          */
         ((DefaultTableModel) CalendarJTable.getModel()).setRowCount(6);
 
@@ -101,9 +98,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         addTableClickListener();
 
-        selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
-        selectedYear = Year.of(YearSelectorJComboBox.getSelectedIndex() + 1);
-
         mapPanel.setVisible(false);
 
         //set components to their initial state
@@ -114,6 +108,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             initializeMap();
             updateCalendar();
         });
+
+        selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
+        selectedYear = Year.of(Integer.parseInt(YearSelectorJComboBox.getSelectedItem().toString()));
 
         /**
          * Adds a listener to the FrameController's coordinates list. This listener is invoked when the size or current index of the coordinates list changes (when MapsController.notifyListeners() is called), which in turn updates the enabled state of the "Next Map" and "Previous Map" buttons.
@@ -157,16 +154,22 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 ((DefaultTableModel) CalendarJTable.getModel()).setValueAt(null, row, col);
             }
         }
-        
+
         int daysInMonth = FC1.getNumberOfDays(selectedMonth, selectedYear);
 
         // Calculate starting day of the week (Monday = 0)
-        LocalDateTime firstDayOfMonth = LocalDateTime.of(selectedYear.getValue(), selectedMonth, 1, 00, 00);
+        LocalDateTime firstDayOfMonth = LocalDateTime.of(selectedYear.getValue(), selectedMonth.getValue(), 1, 00, 00);
         int startingDayOfWeek = firstDayOfMonth.getDayOfWeek().getValue() - 1;
 
         int day = 1;
         int row = 0;
         int col = startingDayOfWeek;
+
+        System.out.println("selectedMonth: " + selectedMonth);
+        System.out.println("selectedYear: " + selectedYear);
+        System.out.println("fistDayOfMonth: " + firstDayOfMonth.getDayOfWeek() + " " + firstDayOfMonth.getDayOfMonth());
+        System.out.println("startingDayOfWeek: " + startingDayOfWeek);
+        System.out.println("daysInMonth: " + daysInMonth);
 
         while (day <= daysInMonth) {
             if (col >= 0 && col < 7) {
@@ -181,7 +184,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         }
     }
 
-    private void MonthSelectorJComboBoxActionPerformed() {
+    // Although the evt parameter is not used, sometimes Netbeans allucinates and expects to have this method with this parameter
+    private void MonthSelectorJComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
         SwingUtilities.invokeLater(()
                 -> updateCalendar()
@@ -226,10 +230,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                         clickedDateChecked = newClickedDate; // Set the current date as selected
 
                         // Update UI with the selected date
-                        if (inNewEventCreation) {
-                            System.out.println("Updating ShowSelectedDate to: " + clickedDateChecked);
-                            ShowSelectedDate.setText(clickedDateChecked.toString());
-                        }
+                        System.out.println("Updating ShowSelectedDate to: " + clickedDateChecked);
+                        ShowSelectedDate.setText(clickedDateChecked.toString());
 
                         System.out.println("Selected date: " + clickedDateChecked + ", Previous date: " + PreviousclickedDate);
                         if (inNewEventCreation)
@@ -354,12 +356,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        NewEventName.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                NewEvent.doClick();
-            }
-        });
-
         CalendarJTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null},
@@ -381,7 +377,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         MonthSelectorJComboBox.setToolTipText("");
         MonthSelectorJComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                MonthSelectorJComboBoxActionPerformed();
+                MonthSelectorJComboBoxActionPerformed(evt);
             }
         });
 
@@ -436,6 +432,11 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         EscBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 EscBtnActionPerformed(evt);
+            }
+        });
+        EscBtn.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                EscBtn.doClick();
             }
         });
 
@@ -588,8 +589,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     public void resetMap() {
         MC1.setSelectedLatitude(51.505);
         MC1.setSelectedLongitude(-0.09);
-        /*PreviousMap.setEnabled(false);
-        NextMap.setEnabled(false);*/
         FC1.getCoordinatesList().clear();
         FC1.resetCoordinates();
     }
@@ -601,7 +600,6 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      */
     private void componentsSetEnabled(boolean setEnabled) {
         ShowSelectedDate.setEnabled(setEnabled);
-        ShowSelectedDate.setText(null);
 
         ShowSelectedLocation.setEnabled(setEnabled);
         ShowSelectedLocation.setText(null);
@@ -640,6 +638,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         resetMap();
     }//GEN-LAST:event_EscBtnActionPerformed
 
+    // This method has the same problem as MonthSelectorJComboBoxActionPerformed
     private void NewEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewEventActionPerformed
 
     }//GEN-LAST:event_NewEventActionPerformed
@@ -773,11 +772,11 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         Platform.runLater(() -> {
             if (webView != null && MC1.isMapLoaded()) // isMapLoaded should be true when map.html is fully loaded
                 try {
-                    JSObject jsWindow = (JSObject) webView.getEngine().executeScript("window");
-                    jsWindow.eval("map.invalidateSize(true); console.log('Invalidating map size from Java method call');");
-                } catch (JSException ex) {
-                    System.err.println("Error calling JavaScript invalidateSize: " + ex.getMessage());
-                }
+                JSObject jsWindow = (JSObject) webView.getEngine().executeScript("window");
+                jsWindow.eval("map.invalidateSize(true); console.log('Invalidating map size from Java method call');");
+            } catch (JSException ex) {
+                System.err.println("Error calling JavaScript invalidateSize: " + ex.getMessage());
+            }
         });
     }
 
