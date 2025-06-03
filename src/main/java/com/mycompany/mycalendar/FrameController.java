@@ -14,7 +14,6 @@ import java.util.List;
 public class FrameController {
 
     private static final FrameController instance = new FrameController();
-    private final int currentYear = Year.now().getValue();
     private final List<Double> CoordinatesList = new ArrayList<>();
     private final List<CoordinatesListListener> indexListeners = new ArrayList<>();
     private int CoordinatesCurrentIndex = -1;
@@ -88,11 +87,11 @@ public class FrameController {
                 listener.onCoordinatesListChanged(size, CoordinatesCurrentIndex);
             }
         }
-    }
+    }/*
     
     public int getCurrentYear() {
-        return currentYear;
-    }
+        return currentYear = Year.now().getValue();
+    }*/
 
     public List<Double> getCoordinatesList() {
         return CoordinatesList;
@@ -102,8 +101,8 @@ public class FrameController {
         return Year.of(year).isLeap();
     }
 
-    public int getNumberOfDays(Month month) {
-        return month.length(isLeapYear(currentYear));
+    public int getNumberOfDays(Month month, Year year) {
+        return month.length(isLeapYear(year.getValue()));
     }
 
     /**

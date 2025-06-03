@@ -30,38 +30,43 @@ import netscape.javascript.JSObject;
  */
 public class MapsController {
 
-    public static final MapsController instance = new MapsController();
-    FrameController FC1 = FrameController.getInstance();
-    boolean isMapLoaded = false;
+    private static final MapsController instance = new MapsController();
+    private final FrameController FC1;
+    private boolean isMapLoaded = false;
     private final List<MapLoadListener> mapLoadListeners = new ArrayList<>();
     private final List<Runnable> pendingMapActions = new ArrayList<>();
 
     private static double selectedLatitude = 51.505;
     private static double selectedLongitude = -0.09;
-    
-    String USER_AGENT = "MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)";
-    static String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
-    
+
+    private final String USER_AGENT = "MyCalendarApp/1.0 (riccardomarchesini036@gmail.com)";
+    private static final String NOMINATIM_REVERSE_API_URL = "https://nominatim.openstreetmap.org/reverse?";
+
     private final Gson gson = new Gson();
-    
+
     private JSONResponse location;
-    
+
     private static final Logger logger = Logger.getLogger(EventDAOImpl.class.getName());
+
+    public MapsController() {
+        this.FC1 = FrameController.getInstance();
+    }
 
     private void queueMapAction(Runnable action) {
         if (isMapLoaded)
             action.run();
         else
             synchronized (pendingMapActions) {
-                pendingMapActions.add(action);
-                System.out.println("Queued map action, pending actions: " + pendingMapActions.size());
-            }
+            pendingMapActions.add(action);
+            System.out.println("Queued map action, pending actions: " + pendingMapActions.size());
+        }
     }
-    
+
     private void executePendingMapActions() {
         synchronized (pendingMapActions) {
-            for (Runnable action : pendingMapActions)
+            for (Runnable action : pendingMapActions) {
                 action.run();
+            }
             pendingMapActions.clear();
             System.out.println("Executed all pending actions");
         }
@@ -116,12 +121,11 @@ public class MapsController {
 
             //enable JavaScritp console logging for debugging
             webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
-            
+
             //enable JavaScritp console logging for debugging
             webView.getEngine().setOnAlert(event -> System.out.println("JS Alert: " + event.getData()));
 
-
-            URL htmlMapUrl = getClass().getResource("/html/map.html");
+            URL htmlMapUrl = getClass().getResource("/leaflet/map.html");
             if (htmlMapUrl == null) {
                 System.err.println("Error: Could not find /html/map.html in resources");
                 webView.getEngine().loadContent("<h1>Error: Map file not found</h1>");
@@ -133,21 +137,21 @@ public class MapsController {
                     System.err.println("WebView error: " + event.getMessage());
                 });
                 webView.getEngine().getLoadWorker().stateProperty().addListener((obs, old, newState) -> {
-                    if (newState == Worker.State.SUCCEEDED) {
+                    if (newState == Worker.State.SUCCEEDED)
                         try {
-                        // Expose the callback to JavaScript
+                            // Expose the callback to JavaScript
                             JSObject window = (JSObject) webView.getEngine().executeScript("window");
                             window.setMember(("javaCallback"), callback);
-                            
-                        // Invalidate map size if map object exists
-                        webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
-                        System.out.println("Map loaded successfully in WebView");
-                        setMapLoaded(true);
+
+                            // Invalidate map size if map object exists
+                            webView.getEngine().executeScript("if (typeof map !== 'undefined') map.invalidateSize();");
+                            System.out.println("Map loaded successfully in WebView");
+                            setMapLoaded(true);
                         } catch (JSException e) {
                             System.out.println("There was an error in comunicating with map.html.");
                             logger.log(Level.SEVERE, "An error occurred during an operation.", e);
                         }
-                    } else if (newState == Worker.State.FAILED) {
+                    else if (newState == Worker.State.FAILED) {
                         System.err.println("Map failed to load");
                         setMapLoaded(true);
                     }
@@ -173,7 +177,7 @@ public class MapsController {
             this.isMapLoaded = isMapLoaded;
             System.out.println("isMapLoaded set to: " + isMapLoaded);
             notifyMapLoaded();
-            if(isMapLoaded)
+            if (isMapLoaded)
                 executePendingMapActions();
         }
     }
@@ -197,9 +201,9 @@ public class MapsController {
             }
         }
     }
-    
-    public JSONResponse getAddressFromCoordinates(double latitude, double longitude){
-        
+
+    public JSONResponse getAddressFromCoordinates(double latitude, double longitude) {
+
         try {
             // Construct the Nominatim API URL
             // format=json: Request JSON response
@@ -208,47 +212,48 @@ public class MapsController {
             // zoom=18: Provides a detailed address (street number, street name, etc.)
             // addressdetails=1: Includes individual address components in the response
             URL url = new URL(
-                    NOMINATIM_REVERSE_API_URL +
-                    "format=json" +
-                    "&lat=" + latitude +
-                    "&lon=" + longitude +
-                    "&zoom=18" +
-                    "&addressdetails=1"
+                    NOMINATIM_REVERSE_API_URL
+                    + "format=json"
+                    + "&lat=" + latitude
+                    + "&lon=" + longitude
+                    + "&zoom=18"
+                    + "&addressdetails=1"
             );
-            
+
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            
+
             // Set the User-Agent header (MANDATORY for Nominatim)
             connection.setRequestProperty("User-Agent", USER_AGENT);
-            
+
             connection.setRequestMethod("GET");
             int responseCode = connection.getResponseCode();
-            
-            if(responseCode == HttpURLConnection.HTTP_OK){
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
                 StringBuilder response;
                 try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
                     String inputLine;
                     response = new StringBuilder();
-                    while((inputLine = in.readLine()) != null)
+                    while ((inputLine = in.readLine()) != null) {
                         response.append(inputLine);
+                    }
                 }
-                
-                 // Deserialize the JSON response directly into your Java object
+
+                // Deserialize the JSON response directly into your Java object
                 location = gson.fromJson(response.toString(), JSONResponse.class);
-                
+
                 return location;
             }
-            
+
         } catch (JsonSyntaxException | IOException ex) {
             System.out.println("There was an erorr in the JSONResponse syntax.");
             Logger.getLogger(MapsController.class.getName()).log(Level.SEVERE, null, ex);
         }
         return null;
     }
-    
+
     /**
-     * Returns a Task that fetches address information from coordinates.
-     * This task is run on a background thread to avoid freezing the UI.
+     * Returns a Task that fetches address information from coordinates. This task is run on a background thread to avoid freezing the UI.
+     *
      * @param latitude The latitude.
      * @param longitude The longitude.
      * @return A Task that, when run, fetches the address and returns a JSONResponse.
@@ -290,7 +295,7 @@ public class MapsController {
     public void setLocation(JSONResponse location) {
         this.location = location;
     }
-    
+
     public static MapsController getInstance() {
         return instance;
     }

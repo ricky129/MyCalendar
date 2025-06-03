@@ -15,6 +15,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDateTime;
 import java.time.Month;
+import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import javafx.application.Platform;
@@ -37,6 +38,8 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+import netscape.javascript.JSException;
+import netscape.javascript.JSObject;
 
 /**
  *
@@ -44,7 +47,10 @@ import javax.swing.table.DefaultTableModel;
  */
 public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoadListener {
 
-    boolean inNewEventCreation = false;
+    private Month selectedMonth;
+    private Year selectedYear;
+
+    private boolean inNewEventCreation = false;
 
     private static final EntityManagerFactory emf = MyCalendar.getEmf();
     private final FrameController FC1 = FrameController.getInstance();
@@ -53,12 +59,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     private JFXPanel fxPanel;
     private WebView webView;
     private LocalDateTime PreviousclickedDate = null;
-    LocalDateTime clickedDateChecked = null;
+    private LocalDateTime clickedDateChecked = null;
 
-    MapsController MC1 = new MapsController();
+    private final MapsController MC1;
     private static final NewJFrame instance = new NewJFrame();
 
-    EventDAOImpl EDI1 = EventDAOImpl.getInstance();
+    private final EventDAOImpl EDI1;
 
     /**
      * Returns the singleton instance of NewJFrame.
@@ -73,15 +79,30 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      * Private constructor for the Singleton pattern. Initializes components and sets up listeners.
      */
     private NewJFrame() {
+        this.MC1 = MapsController.getInstance();
+        this.EDI1 = EventDAOImpl.getInstance();
+        
         this.mapPanel = new JPanel(new java.awt.BorderLayout());
         initComponents();
+        
+        /**
+         * A row is added to the calendar table. This is so much 
+         * less hassle than creating a new model just to use the
+         * same with one more row. This edit is necessary for months
+         * which span to more than 5 weeks, like March 2026.
+         */
+        ((DefaultTableModel) CalendarJTable.getModel()).setRowCount(6);
 
         setupEscapeKeyBinding();
 
         SwingUtilities.invokeLater(()
                 -> updateCalendar()
         );
+
         addTableClickListener();
+
+        selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
+        selectedYear = Year.of(YearSelectorJComboBox.getSelectedIndex() + 1);
 
         mapPanel.setVisible(false);
 
@@ -136,12 +157,11 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 ((DefaultTableModel) CalendarJTable.getModel()).setValueAt(null, row, col);
             }
         }
-
-        Month selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
-        int daysInMonth = FC1.getNumberOfDays(selectedMonth);
+        
+        int daysInMonth = FC1.getNumberOfDays(selectedMonth, selectedYear);
 
         // Calculate starting day of the week (Monday = 0)
-        LocalDateTime firstDayOfMonth = LocalDateTime.of(FC1.getCurrentYear(), selectedMonth, 1, 00, 00);
+        LocalDateTime firstDayOfMonth = LocalDateTime.of(selectedYear.getValue(), selectedMonth, 1, 00, 00);
         int startingDayOfWeek = firstDayOfMonth.getDayOfWeek().getValue() - 1;
 
         int day = 1;
@@ -159,6 +179,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 row++;
             }
         }
+    }
+
+    private void MonthSelectorJComboBoxActionPerformed() {
+        selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
+        SwingUtilities.invokeLater(()
+                -> updateCalendar()
+        );
     }
 
     /**
@@ -182,7 +209,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                         System.out.println("Clicked on cell: Row " + row + ", Column " + column + ", Value: " + value);
                         int day = (Integer) value;
                         Month selectedMonth = Month.of(MonthSelectorJComboBox.getSelectedIndex() + 1);
-                        int year = Integer.parseInt(YearSelectorJCombobox.getSelectedItem().toString());
+                        int year = Integer.parseInt(YearSelectorJComboBox.getSelectedItem().toString());
 
                         // Create the new clicked date
                         LocalDateTime newClickedDate = LocalDateTime.of(year, selectedMonth, day, 0, 0, 0);
@@ -234,41 +261,44 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     @Override
     public void setCoordinates(double latitude, double longitude) {
         System.out.println("Selected coordinates: " + latitude + ", " + longitude);
-        ShowSelectedLocation.setText("Fetching location...");
-        MC1.setSelectedLatitude(latitude);
-        MC1.setSelectedLongitude(longitude);
 
-        //Create a Task to fetch the address in a background thread
-        Task<JSONResponse> fetchAddressTask = MC1.createFetchAddressTask(latitude, longitude);
+        if (inNewEventCreation) {
+            ShowSelectedLocation.setText("Fetching location...");
+            MC1.setSelectedLatitude(latitude);
+            MC1.setSelectedLongitude(longitude);
 
-        //Run the task on a new background thread
-        new Thread(fetchAddressTask).start();
+            //Create a Task to fetch the address in a background thread
+            Task<JSONResponse> fetchAddressTask = MC1.createFetchAddressTask(latitude, longitude);
 
-        //Define what happens when the task succeeds (on JavaFX Application Thread)
-        fetchAddressTask.setOnSucceeded(e -> {
-            JSONResponse response = fetchAddressTask.getValue();
-            if (response != null && response.getDisplayName() != null) {
-                //Update the Swing UI component on the Swing Event Dispatch Thread
-                SwingUtilities.invokeLater(() -> {
-                    ShowSelectedLocation.setText(response.getDisplayName());
-                });
-                System.out.println("Fetched address: " + response.getDisplayName());
-            } else {
-                SwingUtilities.invokeLater(() -> {
-                    ShowSelectedLocation.setText("Address not found.");
-                });
-                System.err.println("Address not found for coordinates: " + latitude + ", " + longitude);
-            }
-        });
+            //Run the task on a new background thread
+            new Thread(fetchAddressTask).start();
 
-        //Define what happens if the task fails (on JavaFX Application Thread)
-        fetchAddressTask.setOnFailed(e -> {
-            Throwable cause = fetchAddressTask.getException();
-            System.out.println("Failed to fetch address: " + cause.getMessage());
-            SwingUtilities.invokeLater(() -> {
-                ShowSelectedLocation.setText("Error fetching address");
+            //Define what happens when the task succeeds (on JavaFX Application Thread)
+            fetchAddressTask.setOnSucceeded(e -> {
+                JSONResponse response = fetchAddressTask.getValue();
+                if (response != null && response.getDisplayName() != null) {
+                    //Update the Swing UI component on the Swing Event Dispatch Thread
+                    SwingUtilities.invokeLater(() -> {
+                        ShowSelectedLocation.setText(response.getDisplayName());
+                    });
+                    System.out.println("Fetched address: " + response.getDisplayName());
+                } else {
+                    SwingUtilities.invokeLater(() -> {
+                        ShowSelectedLocation.setText("Address not found.");
+                    });
+                    System.err.println("Address not found for coordinates: " + latitude + ", " + longitude);
+                }
             });
-        });
+
+            //Define what happens if the task fails (on JavaFX Application Thread)
+            fetchAddressTask.setOnFailed(e -> {
+                Throwable cause = fetchAddressTask.getException();
+                System.out.println("Failed to fetch address: " + cause.getMessage());
+                SwingUtilities.invokeLater(() -> {
+                    ShowSelectedLocation.setText("Error fetching address");
+                });
+            });
+        }
     }
 
     /**
@@ -294,7 +324,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         jScrollPane1 = new javax.swing.JScrollPane();
         CalendarJTable = new javax.swing.JTable();
         MonthSelectorJComboBox = new javax.swing.JComboBox<>();
-        YearSelectorJCombobox = new javax.swing.JComboBox<>();
+        YearSelectorJComboBox = new javax.swing.JComboBox<>();
         NewEvent = new javax.swing.JButton();
         jScrollPane3 = new javax.swing.JScrollPane();
         NewEventDescription = new javax.swing.JTextArea();
@@ -324,6 +354,12 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        NewEventName.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                NewEvent.doClick();
+            }
+        });
+
         CalendarJTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null},
@@ -335,14 +371,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             new String [] {
                 "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
             }
-        ) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    // This makes all cells non-editable
-                    return false;
-                }
-            }
-                );
+        ));
         CalendarJTable.setCellSelectionEnabled(true);
         CalendarJTable.setShowGrid(true);
         jScrollPane1.setViewportView(CalendarJTable);
@@ -350,7 +379,18 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         MonthSelectorJComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" }));
         MonthSelectorJComboBox.setToolTipText("");
-        YearSelectorJCombobox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2025", "2026" }));
+        MonthSelectorJComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                MonthSelectorJComboBoxActionPerformed();
+            }
+        });
+
+        YearSelectorJComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "2025", "2026" }));
+        YearSelectorJComboBox.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                YearSelectorJComboBoxActionPerformed(evt);
+            }
+        });
 
         NewEvent.setText("New Event");
         NewEvent.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -398,11 +438,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 EscBtnActionPerformed(evt);
             }
         });
-        EscBtn.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyPressed(java.awt.event.KeyEvent evt) {
-                EscBtn.doClick();
-            }
-        });
+
+        ShowSelectedDate.setEditable(false);
 
         ShowSelectedLocation.setEditable(false);
 
@@ -427,7 +464,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                                 .addGroup(layout.createSequentialGroup()
                                     .addComponent(MonthSelectorJComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                    .addComponent(YearSelectorJCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(YearSelectorJComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addComponent(NewEventName, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(12, 12, 12)
@@ -457,7 +494,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                     .addGroup(layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(MonthSelectorJComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(YearSelectorJCombobox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(YearSelectorJComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 131, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
@@ -558,23 +595,23 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     }
 
     /**
-     * Enables or disables various UI components related to event creation and map navigation.
-     * mapPanel is not included in this method since it follows a different logic and flow from these components
+     * Enables or disables various UI components related to event creation and map navigation. mapPanel is not included in this method since it follows a different logic and flow from these components
+     *
      * @param setEnabled true to enable, false to disable.
      */
     private void componentsSetEnabled(boolean setEnabled) {
         ShowSelectedDate.setEnabled(setEnabled);
         ShowSelectedDate.setText(null);
-        
+
         ShowSelectedLocation.setEnabled(setEnabled);
         ShowSelectedLocation.setText(null);
-        
+
         NewEventDescription.setEnabled(setEnabled);
         NewEventDescription.setText(null);
-        
+
         NewEventName.setEnabled(setEnabled);
         NewEventName.setText(null);
-        
+
         if (!inNewEventCreation) {
             PreviousMap.setEnabled(setEnabled);
             NextMap.setEnabled(setEnabled);
@@ -606,6 +643,13 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     private void NewEventActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NewEventActionPerformed
 
     }//GEN-LAST:event_NewEventActionPerformed
+
+    private void YearSelectorJComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_YearSelectorJComboBoxActionPerformed
+        selectedYear = Year.of(Integer.parseInt(YearSelectorJComboBox.getSelectedItem().toString()));
+        SwingUtilities.invokeLater(()
+                -> updateCalendar()
+        );
+    }//GEN-LAST:event_YearSelectorJComboBoxActionPerformed
 
     /**
      * Creates a JPanel displaying details of a single event, including a delete button.
@@ -725,6 +769,18 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
         });
     }
 
+    public void invalidateMapSize() {
+        Platform.runLater(() -> {
+            if (webView != null && MC1.isMapLoaded()) // isMapLoaded should be true when map.html is fully loaded
+                try {
+                    JSObject jsWindow = (JSObject) webView.getEngine().executeScript("window");
+                    jsWindow.eval("map.invalidateSize(true); console.log('Invalidating map size from Java method call');");
+                } catch (JSException ex) {
+                    System.err.println("Error calling JavaScript invalidateSize: " + ex.getMessage());
+                }
+        });
+    }
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable CalendarJTable;
     private javax.swing.JButton EscBtn;
@@ -736,7 +792,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     private javax.swing.JButton PreviousMap;
     private javax.swing.JTextField ShowSelectedDate;
     private javax.swing.JTextField ShowSelectedLocation;
-    private javax.swing.JComboBox<String> YearSelectorJCombobox;
+    private javax.swing.JComboBox<String> YearSelectorJComboBox;
     private javax.swing.JButton jButton1;
     private javax.swing.JDialog jDialog1;
     private javax.swing.JLabel jLabel1;
