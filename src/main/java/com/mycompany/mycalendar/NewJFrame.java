@@ -101,7 +101,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
         addTableClickListener();
 
-        mapPanelSetVisible(false);
+        RevalidateRepaint();
 
         //set components to their initial state
         componentsSetEnabled(false);
@@ -243,10 +243,9 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
 
                         if (!inNewEventCreation)
                             updateEventsPanel(EDI1.getEvents(clickedDateChecked));
-
-                    } else
-                        mapPanelSetVisible(false);
+                    }
                 }
+                RevalidateRepaint();
             }
         });
     }
@@ -560,7 +559,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             inNewEventCreation = true;
             componentsSetEnabled(true);
             if (MC1.isMapLoaded())
-                mapPanelSetVisible(true);
+                RevalidateRepaint();
         }
     }//GEN-LAST:event_NewEventMouseClicked
 
@@ -636,9 +635,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
                 return;
             }
 
-            mapPanelSetVisible(false);
-            mapPanel.revalidate();
-            mapPanel.repaint();
+            RevalidateRepaint();
             clickedDateChecked = null;
             PreviousclickedDate = null;
             updateEventsPanel(null);
@@ -787,8 +784,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
             jPanel1.add(noEventsLabel);
         }
 
-        jPanel1.revalidate();
-        jPanel1.repaint();
+        RevalidateRepaint();
     }
 
     /**
@@ -797,10 +793,8 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
     @Override
     public void onMapLoaded() {
         System.out.println("Map loaded, processing queued actions if any");
-        SwingUtilities.invokeLater(() -> {
-            mapPanelSetVisible(true);
-            MC1.setMapToCurrentCoordinates(webView);
-        });
+        RevalidateRepaint();
+        MC1.setMapToCurrentCoordinates(webView);
     }
 
     /**
@@ -808,8 +802,7 @@ public class NewJFrame extends javax.swing.JFrame implements MapCallback, MapLoa
      *
      * @param visible true = map is visible, false = map is not visible
      */
-    private void mapPanelSetVisible(boolean visible) {
-        mapPanel.setVisible(visible);
+    private void RevalidateRepaint() {
 
         SwingUtilities.invokeLater(() -> {
             if (fxPanel != null) {
