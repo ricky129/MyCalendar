@@ -1,1 +1,53 @@
-/target/
+# Maven build artifacts
+target/archive-tmp
+target/classes
+target/generated-sources
+target/maven-status
+
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/
+logs/
+error.log
+errors.log
+output.log
+build.log
+shade-error.log
+hs_err_pid*.log
+
+# VS Code
+.vscode/
+
+# Visual Studio
+.vs/
+
+# OS generated files
+.DS_Store
+.localized
+Thumbs.db
+Desktop.ini
+
+# Compile files
+classes/
+dir/
+generated-sources/
+generated-test-sources/
+libs/
+dependency-tree.txt
+
+# Data/Log files
+contents_base.txt
+contents_controls.txt
+contents_graphics.txt
+contents_persistence.txt
+contents_swing.txt
+contents_web.txt
+
+/META-INF/
+
+!target/MyCalendar-1.0-SNAPSHOT-jar-with-dependencies.jar
