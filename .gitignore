@@ -3,6 +3,7 @@ target/archive-tmp
 target/classes
 target/generated-sources
 target/maven-status
+target/MyCalendar-1.0-SNAPSHOT.jar
 
 pom.xml.tag
 pom.xml.releaseBackup
